@@ -1,5 +1,5 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { UserCacheTTL, UserReadCacheTTL } from 'src/caching/cache.constants';
 import { CreateUserDataDto, UpdateUserDataDto } from 'src/dto/user.dto';
@@ -34,7 +34,7 @@ export class UserService {
         );
         // 사용자가 없다면 에러 throw
         if (!exUser) { 
-            throw Error("user not found");
+            throw new NotFoundException(`userId ${userId} is not exist.`);
         }
 
         await this.cacheManager.set(
@@ -76,19 +76,21 @@ export class UserService {
     }
 
     async createUser(createUserData: CreateUserDataDto): Promise<boolean> {
-        const { password } = createUserData;
+        const { userId, password } = createUserData;
         // 비밀번호 암호화
         const hashPassword = await bcrypt.hash(password, 10);
 
-        try {
-            await this.userModel.create({
-                ...createUserData,
-                password: hashPassword, // 데이터베이스에는 암호환된 비밀번호 저장
-            });
-        } catch (e) {
-            console.log("user data is wrong");
-            return false;
+        const exUser = await this.userModel.findOne({ where: { userId } });
+        if (exUser) {
+            throw new ConflictException(`userId ${userId} is already exist.`);
         }
+
+        await this.userModel.create({
+            ...createUserData,
+            password: hashPassword, // 데이터베이스에는 암호환된 비밀번호 저장
+        });
+        
+        console.log(`[Info]userId ${userId} is created.`);
 
         return true;
     }
@@ -96,14 +98,9 @@ export class UserService {
     async deleteUser(userId: string): Promise<boolean> {
         await this.getUser(userId);
 
-        try {
-            await this.userModel.destroy({
-                where: { userId },
-            });
-        } catch (e) {
-            console.log("failed delete");
-            return false;
-        }
+        await this.userModel.destroy({
+            where: { userId },
+        });
 
         console.log(`[Info]userId ${userId} is removed.`);
 
@@ -114,17 +111,12 @@ export class UserService {
         const { userId }: { userId: string } = updateUserData;
         await this.getUser(userId);
 
-        try {
-            // updateUserData의 있는 변경된 사항들만 update
-            this.userModel.update({
-                ...updateUserData,
-            }, {
-                where: { userId },
-            });
-        } catch (e) {
-            console.log("failed update");
-            return false;
-        }
+        // updateUserData의 있는 변경된 사항들만 update
+        this.userModel.update({
+            ...updateUserData,
+        }, {
+            where: { userId },
+        });
 
         console.log(`[Info]userId ${userId} is changed.`);
 

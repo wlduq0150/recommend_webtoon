@@ -6,6 +6,7 @@ import { MysqlSequelizeModule } from './sequelize/mysql_sequelize.module';
 import { CachingModule } from './caching/caching.module';
 import { WebtoonModule } from './webtoon/webtoon.module';
 import { UserModule } from 'src/user/user.module';
+import { DtoFilterProvider } from './custom-provider/filter.provider';
 
 @Module({
     imports: [
@@ -16,6 +17,6 @@ import { UserModule } from 'src/user/user.module';
       WebtoonModule
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, DtoFilterProvider],
 })
 export class AppModule {}
