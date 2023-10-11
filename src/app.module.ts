@@ -7,6 +7,7 @@ import { CachingModule } from './caching/caching.module';
 import { WebtoonModule } from './webtoon/webtoon.module';
 import { UserModule } from 'src/user/user.module';
 import { DtoFilterProvider } from './custom-provider/filter.provider';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
     imports: [
@@ -14,7 +15,8 @@ import { DtoFilterProvider } from './custom-provider/filter.provider';
       MysqlSequelizeModule.forRoot(),
       CachingModule.register(),
       UserModule,
-      WebtoonModule
+      WebtoonModule,
+      AuthModule
     ],
     controllers: [AppController],
     providers: [AppService, DtoFilterProvider],

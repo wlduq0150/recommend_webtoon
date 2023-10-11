@@ -1,7 +1,7 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { ConflictException, HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { webtoonCacheTTL } from 'src/constatns/redis.constants';
+import { webtoonCacheTTL } from 'src/constatns/cache.constants';
 import { InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
 import { Webtoon } from 'src/sequelize/entity/webtoon.model';
 import { SelectOption } from 'src/types/webtoon.type';

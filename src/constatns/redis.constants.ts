@@ -1,1 +1,0 @@
-export const webtoonCacheTTL: number = 30000;

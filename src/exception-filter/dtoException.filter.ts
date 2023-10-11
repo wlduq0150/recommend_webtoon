@@ -3,21 +3,22 @@ import { Request, Response } from "express";
 
 @Catch(BadRequestException)
 export class DtoExceptionFilter implements ExceptionFilter {
-    catch(exception: any, host: ArgumentsHost) {
+    catch(exception: BadRequestException, host: ArgumentsHost) {
         const ctx = host.switchToHttp();
         const req = ctx.getRequest<Request>();
         const res = ctx.getResponse<Response>();
 
         // 상태 코드 및 예외 응답 가져오기
         const status = exception.getStatus();
-        const exceptionResonse = exception.getResponse();
+        const exceptionResonse = exception.getResponse() as any;
 
         // 요청했던 프로퍼티 및 응답 오류 메시지 변환 -> [["updateDay", "string"], ["fanCount"]: "number"]
-        const messages = exceptionResonse.message;
-        const requestPropertys = req.body;
+        const messages: string[] = exceptionResonse.message;
+        const requestPropertys: Record<string, any> = req.body;
         let errorPropertys: Array<string[]> = messages.map((message) => {
-            const property = message.split(" ")[0];
-            const dtoType = message.split(" ")[4];
+            const first = message.split(" ")[0];
+            const property = first !== "property" ? first : message.split(" ")[1];
+            const dtoType = first !== "property" ? message.split(" ")[4] : "exclude";
             return [ property, dtoType ];
         });
 
@@ -35,7 +36,7 @@ export class DtoExceptionFilter implements ExceptionFilter {
 
         // [["updateDay", "string"], ["fanCount", "null"]] 이중 키, 값 배열 객체 리터럴로 변환
         // => { "updateDay": "string", "fanCount": "null" }
-        const property = Object.fromEntries(errorPropertys);
+        const property: Record<string, string | null> = Object.fromEntries(errorPropertys);
 
         res
         .status(status)

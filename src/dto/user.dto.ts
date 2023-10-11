@@ -1,6 +1,6 @@
 import { PartialType } from "@nestjs/mapped-types";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
-import { IsNotEmptyOnAllProperties } from "./function.dto";
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNotEmptyOnAllProperties } from "./dtoFunction";
 
 @IsNotEmptyOnAllProperties()
 export class CreateUserDataDto {
@@ -28,4 +28,12 @@ export class UpdateUserDataDto extends PartialType(CreateUserDataDto) {
     @IsNotEmpty()
     @IsString()
     userId: string; 
+
+    @IsOptional()
+    @IsString()
+    currentRefreshToken?: string;
+
+    @IsOptional()
+    @IsDate()
+    currentRefreshTokenExp?: Date;
 }

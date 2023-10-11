@@ -1,12 +1,12 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { UserCacheTTL, UserReadCacheTTL } from 'src/caching/cache.constants';
+import { UserCacheTTL, UserReadCacheTTL } from 'src/constatns/cache.constants';
 import { CreateUserDataDto, UpdateUserDataDto } from 'src/dto/user.dto';
 import { User } from 'src/sequelize/entity/user.model';
+import { Webtoon } from 'src/sequelize/entity/webtoon.model';
 
 import * as bcrypt from "bcrypt";
-import { Webtoon } from 'src/sequelize/entity/webtoon.model';
 
 @Injectable()
 export class UserService {
@@ -25,13 +25,10 @@ export class UserService {
             return userInfo;
         }
 
-        // password를 제외한 사용자 정보를 id를 통해 가져오기
-        const exUser: User = await this.userModel.findOne(
-            {
-                where: { userId },
-                attributes: { exclude: ["password", "currentRefreshToken"] }
-            }
-        );
+        // currentRefreshToken을 제외한 사용자 정보를 id를 통해 가져오기
+        const exUser: User = await this.userModel.findOne({
+            where: { userId },
+        });
         // 사용자가 없다면 에러 throw
         if (!exUser) { 
             throw new NotFoundException(`userId ${userId} is not exist.`);
@@ -102,6 +99,9 @@ export class UserService {
             where: { userId },
         });
 
+        const userCacheKey: string = `userCache-${userId}`;
+        await this.cacheManager.del(userCacheKey);
+
         console.log(`[Info]userId ${userId} is removed.`);
 
         return true;
@@ -117,6 +117,9 @@ export class UserService {
         }, {
             where: { userId },
         });
+
+        const userCacheKey: string = `userCache-${userId}`;
+        await this.cacheManager.del(userCacheKey);
 
         console.log(`[Info]userId ${userId} is changed.`);
 

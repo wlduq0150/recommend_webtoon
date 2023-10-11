@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
-import { IsNotEmptyOnAllProperties } from "./function.dto";
+import { IsNotEmptyOnAllProperties } from "./dtoFunction";
 import { PartialType } from "@nestjs/mapped-types";
 
 @IsNotEmptyOnAllProperties()
