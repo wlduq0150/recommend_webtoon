@@ -11,9 +11,7 @@ export class JwtAccessTokenStrategy extends PassportStrategy(Strategy, "access_t
         super({
             // request의 쿠키에서 refresh token을 가져옴
             jwtFromRequest: ExtractJwt.fromExtractors([
-                (request) => { 
-                    console.log(request.cookies);
-                    return request?.cookies?.access_token }
+                (request) => { return request?.cookies?.access_token }
             ]),
             // access toke  n secret key
             secretOrKey: configService.get<string>("JWT_ACCESS_TOKEN_SECRET"),
