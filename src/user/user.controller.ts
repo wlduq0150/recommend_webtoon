@@ -10,8 +10,16 @@ export class UserController {
 
     @UseGuards(JwtAccessTokenGuard)
     @Get(":id")
-    getUser(@Param("id") userId: string) {
-        return this.userService.getUser(userId);
+    async getUser(@Param("id") userId: string) {
+        const user = await this.userService.getUser(userId);
+        const transformedUser = {
+            userId: user.userId,
+            name: user.name,
+            age: user.age,
+            sex: user.sex,
+            address: user.address
+        };
+        return transformedUser;
     }
 
     @Get("/:id/readWebtoons")
