@@ -4,7 +4,7 @@ import { Cache } from 'cache-manager';
 import { webtoonCacheTTL } from 'src/constatns/cache.constants';
 import { InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
 import { Webtoon } from 'src/sequelize/entity/webtoon.model';
-import { SelectOption } from 'src/types/webtoon.type';
+import { SelectOption } from 'src/types/webtoon.interface';
 
 @Injectable()
 export class WebtoonService {

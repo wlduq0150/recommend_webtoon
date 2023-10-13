@@ -8,6 +8,7 @@ import { WebtoonModule } from './webtoon/webtoon.module';
 import { UserModule } from 'src/user/user.module';
 import { DtoFilterProvider } from './custom-provider/filter.provider';
 import { AuthModule } from './auth/auth.module';
+import { CrawlingModule } from './crawling/crawling.module';
 
 @Module({
     imports: [
@@ -16,7 +17,8 @@ import { AuthModule } from './auth/auth.module';
       CachingModule.register(),
       UserModule,
       WebtoonModule,
-      AuthModule
+      AuthModule,
+      CrawlingModule
     ],
     controllers: [AppController],
     providers: [AppService, DtoFilterProvider],

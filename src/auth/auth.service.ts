@@ -4,7 +4,7 @@ import { LoginDto } from 'src/dto/auth.dto';
 import { User } from 'src/sequelize/entity/user.model';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { TokenData } from 'src/types/auth.type';
+import { TokenData } from 'src/types/auth.interface';
 
 import * as bcrypt from "bcrypt";
 
