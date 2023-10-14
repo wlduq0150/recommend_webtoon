@@ -8,7 +8,7 @@ export interface SelectOption {
     descriptionLength?: number;
 }
 
-export interface CrawlOption {
+export interface CrawlWebtoonOption {
     title?: boolean;
     author?: boolean;
     episodeLength?: boolean;
@@ -19,6 +19,10 @@ export interface CrawlOption {
     genreCount?: boolean;
     description?: boolean;
     fanCount?: boolean;
+}
+
+export interface CrawlDayOption {
+    day: "월" | "화" | "수" | "목" | "금" | "토" | "일" | "완";
 }
 
 export interface CrawledWebtoon {

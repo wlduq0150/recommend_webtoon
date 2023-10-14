@@ -30,3 +30,16 @@ export const KAKAO_DESCRIPTION_SELECTOR = "#__next > div > div.flex.w-full.grow.
 export const KAKAO_EPISODELENGTH_CLICK_SELECTOR = "#__next > div > div.flex.w-full.grow.flex-col.px-122pxr > div.flex.h-full.flex-1 > div.mb-28pxr.ml-4px.flex.w-632pxr.flex-col.overflow-hidden.rounded-12pxr > div.relative.flex.w-full.flex-col.my-0.bg-bg-a-20.px-15pxr.pt-28pxr.pb-12pxr > div > div > div:nth-child(1)";
 export const KAKAO_EPISODELENGTH_WAIT_SELECTOR = "#__next > div > div.flex.w-full.grow.flex-col.px-122pxr > div.flex.h-full.flex-1 > div.mb-28pxr.ml-4px.flex.w-632pxr.flex-col.overflow-hidden.rounded-12pxr > div.flex-1.flex.flex-col > div.rounded-b-12pxr.bg-bg-a-20 > div.flex.min-h-\\[250px\\].flex-col.justify-center > div.min-h-364pxr > ul";
 export const KAKAO_EPISODELENGTH_SELECTOR = "#__next > div > div.flex.w-full.grow.flex-col.px-122pxr > div.flex.h-full.flex-1 > div.mb-28pxr.ml-4px.flex.w-632pxr.flex-col.overflow-hidden.rounded-12pxr > div.flex-1.flex.flex-col > div.rounded-b-12pxr.bg-bg-a-20 > div.flex.h-44pxr.w-full.flex-row.items-center.justify-between.bg-bg-a-20.px-18pxr > div.flex.h-full.flex-1.items-center.space-x-8pxr > span";
+
+
+export const NAVER_DAY_WEBTOONLIST_SELECTOR = "#content > div:nth-child(1) > ul";
+export const NAVER_DAY_CLICK_SELECTOR = "#wrap > header > div.SubNavigationBar__snb_wrap--A5gfM > nav > ul > li:nth-child(10) > a";
+
+export const KAKAO_DAY_WEBTOONLIST_SELECTOR = "#__next > div > div.flex.w-full.grow.flex-col.px-122pxr > div > div.flex.grow.flex-col > div.mb-4pxr.flex-col > div > div.px-11pxr > div > div";
+
+
+export const NAVER_DAY_TRANSFORM = ["", "mon", "tue", "wed", "thu", "fri", "sat", "sun", "", "", "", "", "finish"];
+export const KAKAO_DAY_TRANSFORM = ["", "월", "화", "수", "목", "금", "토", "일", "", "", "", "", "완"];
+
+
+

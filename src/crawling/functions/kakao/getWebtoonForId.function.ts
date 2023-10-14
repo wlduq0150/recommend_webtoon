@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import * as cheerio from "cheerio";
-import { CrawlOption, CrawledWebtoon } from "src/types/webtoon.interface";
+import { CrawlWebtoonOption, CrawledWebtoon } from "src/types/webtoon.interface";
 import {
     KAKAO_AUTHOR_SELECTOR,
     KAKAO_CATEGORY_SELECTOR,
@@ -34,7 +34,7 @@ function parseIntFromFanCountText(fanCountText: string) {
 export async function getKakaoWebtoonForId(
     page: Page,
     webtoonId: string,
-    option?: CrawlOption,
+    option?: CrawlWebtoonOption,
 ): Promise<CrawledWebtoon> {
     const webtoon: CrawledWebtoon = { webtoonId, service: "kakao" };
 

@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import * as cheerio from "cheerio";
-import { CrawlOption, CrawledWebtoon } from "src/types/webtoon.interface";
+import { CrawlWebtoonOption, CrawledWebtoon } from "src/types/webtoon.interface";
 import {
     NAVER_AUTHOR_SELECTOR,
     NAVER_DESCRIPTION_SELECTOR,
@@ -16,7 +16,7 @@ import {
 export async function getNaverWebtoonForId(
     page: Page,
     webtoonId: string,
-    option?: CrawlOption,
+    option?: CrawlWebtoonOption,
 ): Promise<CrawledWebtoon> {
     const webtoon: CrawledWebtoon = { webtoonId, service: "NAVER" };
 

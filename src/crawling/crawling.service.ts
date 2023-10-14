@@ -7,8 +7,10 @@ import { WebtoonService } from 'src/webtoon/webtoon.service';
 import { naverPageLogin } from './functions/naver/pageLogin.function';
 import { kakaoPageLogin } from './functions/kakao/pageLogin.function';
 import { getNaverWebtoonForId } from './functions/naver/getWebtoonForId.function';
-import { CrawledWebtoon } from 'src/types/webtoon.interface';
+import { CrawlDayOption, CrawledWebtoon } from 'src/types/webtoon.interface';
 import { getKakaoWebtoonForId } from './functions/kakao/getWebtoonForId.function';
+import { getNaverWebtoonIdForDay } from './functions/naver/getWebtoonIdForDay.function';
+import { getKakaoWebtoonIdForDay } from './functions/kakao/getWebtoonIdForDay.function';
 
 @Injectable()
 export class CrawlingService {
@@ -31,14 +33,12 @@ export class CrawlingService {
             height: 720
         });
 
-        await this.login(page, "naver");
-
-        const webtoon = await getNaverWebtoonForId(page, "802293");
+        const webtoonId = await getNaverWebtoonIdForDay(page, { day: "월" });
 
         await page.close();
         await browser.close();
 
-        return webtoon;
+        return webtoonId;
     }
 
     async login(page: Page, service: string): Promise<boolean> {
@@ -58,6 +58,14 @@ export class CrawlingService {
             : await getKakaoWebtoonForId(page, webtoonId);
 
         return webtoon;
+    }
+
+    async crawlWeeklyWebtoonId(page: Page, day: CrawlDayOption, service: string): Promise<string[]> {
+        const webtoonIds = service === "naver"
+            ? await getKakaoWebtoonIdForDay(page, day)
+            : await getNaverWebtoonIdForDay(page, day);
+
+        return webtoonIds;
     }
 
 }
