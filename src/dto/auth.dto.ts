@@ -1,8 +1,6 @@
 import { IsString } from "class-validator";
-import { IsNotEmptyOnAllProperties } from "./dtoFunction";
 import { ApiProperty } from "@nestjs/swagger";
 
-@IsNotEmptyOnAllProperties()
 export class LoginDto {
 
     @IsString()

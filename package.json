@@ -40,6 +40,7 @@
     "cross-env": "^7.0.3",
     "joi": "^17.11.0",
     "mysql2": "^3.6.1",
+    "openai": "^4.12.1",
     "passport-jwt": "^4.0.1",
     "puppeteer": "^21.3.8",
     "reflect-metadata": "^0.1.13",

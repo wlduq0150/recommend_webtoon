@@ -9,6 +9,7 @@ import { UserModule } from 'src/user/user.module';
 import { DtoFilterProvider } from './custom-provider/filter.provider';
 import { AuthModule } from './auth/auth.module';
 import { CrawlingModule } from './crawling/crawling.module';
+import { OpenaiModule } from './openai/openai.module';
 
 @Module({
     imports: [
@@ -18,7 +19,8 @@ import { CrawlingModule } from './crawling/crawling.module';
       UserModule,
       WebtoonModule,
       AuthModule,
-      CrawlingModule
+      CrawlingModule,
+      OpenaiModule
     ],
     controllers: [AppController],
     providers: [AppService, DtoFilterProvider],

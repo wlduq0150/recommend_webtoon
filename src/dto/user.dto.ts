@@ -1,9 +1,6 @@
-import { PartialType } from "@nestjs/mapped-types";
 import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
-import { IsNotEmptyOnAllProperties, IsOptionalOnAllProperties } from "./dtoFunction";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-@IsNotEmptyOnAllProperties()
 export class CreateUserDataDto {
     @IsString()
     @ApiProperty({ description: '아이디' })
@@ -31,7 +28,6 @@ export class CreateUserDataDto {
 }
 
 // CreateUserDataDto의 속성들을 partial(선택적)으로 해서 확장한다.
-@IsOptionalOnAllProperties()
 export class UpdateUserDataDto {
     @IsNotEmpty()
     @IsString()

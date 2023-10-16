@@ -1,8 +1,6 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
-import { IsNotEmptyOnAllProperties } from "./dtoFunction";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-@IsNotEmptyOnAllProperties()
 export class InsertWebtoonDto {
     
     @IsString()
