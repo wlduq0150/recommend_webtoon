@@ -1,0 +1,1 @@
+export const GENRE_FOLDER = "C:\\Users\\wlduq\\Desktop\\nest\\nest_project\\src\\genre\\genres";

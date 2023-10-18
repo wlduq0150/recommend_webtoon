@@ -10,6 +10,7 @@ import { DtoFilterProvider } from './custom-provider/filter.provider';
 import { AuthModule } from './auth/auth.module';
 import { CrawlingModule } from './crawling/crawling.module';
 import { OpenaiModule } from './openai/openai.module';
+import { GenreModule } from './genre/genre.module';
 
 @Module({
     imports: [
@@ -20,7 +21,8 @@ import { OpenaiModule } from './openai/openai.module';
       WebtoonModule,
       AuthModule,
       CrawlingModule,
-      OpenaiModule
+      OpenaiModule,
+      GenreModule
     ],
     controllers: [AppController],
     providers: [AppService, DtoFilterProvider],

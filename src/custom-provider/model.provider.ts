@@ -1,4 +1,5 @@
 import { Scope } from "@nestjs/common";
+import { Genre } from "src/sequelize/entity/genre.model";
 import { User } from "src/sequelize/entity/user.model";
 import { Webtoon } from "src/sequelize/entity/webtoon.model";
 
@@ -13,3 +14,9 @@ export const userProvider = {
     useValue: User,
     Scope: Scope.DEFAULT
 };
+
+export const GenreProvider = {
+    provide: "GENRE",
+    useValue: Genre,
+    Scope: Scope.DEFAULT 
+}

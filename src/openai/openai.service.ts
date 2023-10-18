@@ -1,25 +1,26 @@
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ChatCompletionMessageParam, FileObject, FineTune } from "openai/resources";
-import { OPENAI_EMBEDDING_MODEL, OPENAI_FINETUNE_3_5_MODEL, OPENAI_FINETUNE_BABBAGE_MODEL, OPENAI_JSONL_FOLDER_PATH } from "src/constatns/openai.constants";
+import {
+    OPENAI_COMPLETION_3_5_MODEL,
+    OPENAI_EMBEDDING_MODEL,
+    OPENAI_FINETUNE_3_5_MODEL,
+    OPENAI_JSONL_FOLDER_PATH,
+} from "src/constatns/openai.constants";
 import { FineTuningJob } from "openai/resources/fine-tuning/jobs";
 
 import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
-
-
+import { CreateFineTuneModelDto } from "src/dto/openai.dto";
 
 @Injectable()
 export class OpenaiService {
-    
+
     private openai: OpenAI;
 
     constructor(
         private readonly configService: ConfigService,
-        @Inject(CACHE_MANAGER)
-        private readonly cacheManager: Cache,
     ) {
         const API_KEY: string = configService.get<string>("OPENAI_API_KEY");
         const configuration = { apiKey: API_KEY };
@@ -35,7 +36,7 @@ export class OpenaiService {
     ): Promise<string> {
         try {
             const params: OpenAI.CompletionCreateParams = {
-                model,
+                model: model ? model : OPENAI_COMPLETION_3_5_MODEL,
                 prompt,
                 temperature,
                 max_tokens,
@@ -55,6 +56,15 @@ export class OpenaiService {
         }
     }
 
+    create_3_5_PromptMessage(systemMessage: string, userMessage: string) {
+        const prompt: ChatCompletionMessageParam[] = [
+            { role: "system", content: systemMessage },
+            { role: "user", content: userMessage }
+        ];
+
+        return prompt;
+    }
+
     // 3.5버전 이상 모델의 completion 요청
     async create_3_5_Completion(
         model: string,
@@ -64,14 +74,14 @@ export class OpenaiService {
     ): Promise<string> {
         try {
             const params: OpenAI.Chat.ChatCompletionCreateParams = {
-                model,
+                model: model ? model : OPENAI_COMPLETION_3_5_MODEL,
                 messages: prompt,
                 temperature,
                 max_tokens: maxTokens,
             };
 
             const completion = await this.openai.chat.completions.create(params);
-
+            
             return completion.choices[0].message.content;
         } catch (err) {
             if (err instanceof OpenAI.APIError) {
@@ -85,7 +95,7 @@ export class OpenaiService {
     }
 
     // 단어, 문장을 embedding 수치 벡터화
-    async createEmbedding(model: string, input: string): Promise<number[]> {
+    async createEmbedding(input: string): Promise<number[]> {
         try {
             const response = await this.openai.embeddings.create({
                 model: OPENAI_EMBEDDING_MODEL,
@@ -93,7 +103,7 @@ export class OpenaiService {
             });
 
             const embedding = response.data[0]?.embedding;
-            
+
             return embedding;
         } catch (err) {
             if (err instanceof OpenAI.APIError) {
@@ -106,46 +116,43 @@ export class OpenaiService {
         }
     }
 
-    // openai fine-tuning을 위한 file(jsonl) 업로드 
+    // openai fine-tuning을 위한 file(jsonl) 업로드
     async createFileUpload(path: string): Promise<FileObject> {
         if (path.split(".").pop() !== "jsonl") {
             throw new BadRequestException("Upload File's type must be jsonl..");
         }
 
-        const file= fs.createReadStream(path);
-        const upload = await this.openai.files.create(
-            {
-                file,
-                purpose: "fine-tune"
-            }
-        );
+        const file = fs.createReadStream(path);
+        const upload = await this.openai.files.create({
+            file,
+            purpose: "fine-tune",
+        });
         return upload;
     }
 
     // 업로드된 파일을 미세조정 작업 요청
-    async createFineTuneModel(fileId: string, model ?: string): Promise<FineTuningJob> {
+    async createFineTuneModel(createFineTuneModelDto: CreateFineTuneModelDto): Promise<FineTuningJob> {
+        const { fileId, model } = createFineTuneModelDto;
         try {
             const trainingFile = fileId;
             const trainingModel = model ? model : OPENAI_FINETUNE_3_5_MODEL;
 
-            const fineTune = await this.openai.fineTuning.jobs.create(
-                {
-                    training_file: trainingFile,
-                    model: trainingModel,
-                    hyperparameters: { n_epochs: 4 }
-                }
-            )
+            const fineTune = await this.openai.fineTuning.jobs.create({
+                training_file: trainingFile,
+                model: trainingModel,
+                hyperparameters: { n_epochs: 4 },
+            });
 
             return fineTune;
         } catch (e) {
             if (e instanceof OpenAI.APIError) {
-                console.log(e.status); 
-                console.log(e.name); 
-                console.log(e.headers); 
+                console.log(e.status);
+                console.log(e.name);
+                console.log(e.headers);
                 console.log(e);
-              } else {
+            } else {
                 throw e;
-              }
+            }
         }
     }
 
@@ -176,12 +183,12 @@ export class OpenaiService {
             await this.openai.files.del(id);
         } catch (e) {
             if (e instanceof OpenAI.APIError) {
-                console.log(e.status); 
-                console.log(e.name); 
-                console.log(e.headers); 
-              } else {
+                console.log(e.status);
+                console.log(e.name);
+                console.log(e.headers);
+            } else {
                 throw e;
-              }
+            }
         }
     }
 
@@ -192,11 +199,11 @@ export class OpenaiService {
         } catch (e) {
             if (e instanceof OpenAI.APIError) {
                 console.log(e.status);
-                console.log(e.name); 
-                console.log(e.headers); 
-              } else {
+                console.log(e.name);
+                console.log(e.headers);
+            } else {
                 throw e;
-              }
+            }
         }
     }
 
@@ -212,7 +219,7 @@ export class OpenaiService {
         fs.writeFileSync(
             OPENAI_JSONL_FOLDER_PATH + path.basename(filePath, ".json") + ".jsonl",
             jsonlData,
-            { encoding: "utf-8" }
+            { encoding: "utf-8" },
         );
     }
 }
