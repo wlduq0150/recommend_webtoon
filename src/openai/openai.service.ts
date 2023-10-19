@@ -116,6 +116,45 @@ export class OpenaiService {
         }
     }
 
+    // embedding 벡터간의 거리를 구해서 유사도를 구한다.
+    calcSimilarityFromEmbedding(
+        embVector1: number[],
+        embVector2: number[]
+    ): number {
+        // const n: number = (
+        //     (embVector1.length !== embVector2.length) ? (
+        //         embVector1.length < embVector2.length ? embVector1.length : embVector2.length
+        //     ) : ( embVector1.length )
+        // );
+        
+        // let similarity: number = 0;
+    
+        // for (let i = 0; i < n; i++) {
+        //     similarity += (embVector1[i] - embVector2[i]) ** 2;
+        // }
+        // similarity = Math.sqrt(similarity);
+        if (embVector1.length !== embVector2.length) {
+            throw new Error("Vector dimensions do not match.");
+        }
+
+        let dotProduct = 0;
+        let magnitude1 = 0;
+        let magnitude2 = 0;
+
+        for (let i = 0; i < embVector1.length; i++) {
+            dotProduct += embVector1[i] * embVector2[i];
+            magnitude1 += embVector1[i] ** 2;
+            magnitude2 += embVector2[i] ** 2;
+        }
+
+        magnitude1 = Math.sqrt(magnitude1);
+        magnitude2 = Math.sqrt(magnitude2);
+
+        const similarity = dotProduct / (magnitude1 * magnitude2);
+
+        return similarity;
+    }
+
     // openai fine-tuning을 위한 file(jsonl) 업로드
     async createFileUpload(path: string): Promise<FileObject> {
         if (path.split(".").pop() !== "jsonl") {

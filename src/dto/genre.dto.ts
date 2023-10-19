@@ -51,4 +51,8 @@ export class UpdateGenreDto {
 export class DeleteGenreDto {
     @IsString()
     keyword: string;
+
+    @IsString()
+    @IsOptional()
+    service?: string;
 }

@@ -7,8 +7,8 @@ export class GenreController {
     constructor(private readonly genreService: GenreService) {}
 
     @Get("test")
-    test() {
-        return this.genreService.initKeyword("naver");
+    async test() {
+        return this.genreService.updateTransform("naver", "kakao");
     }
     
 

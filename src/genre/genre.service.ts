@@ -12,17 +12,16 @@ import { OPENAI_JSONL_FOLDER_PATH } from 'src/constatns/openai.constants';
 
 @Injectable()
 export class GenreService {
-
     constructor(
         @Inject("GENRE") private genreModel: typeof Genre,
         private readonly webtoonService: WebtoonService,
-        private readonly openaiService: OpenaiService
+        private readonly openaiService: OpenaiService,
     ) {}
 
     // 모든 keyword 불러오기
     async getAllGenre(service?: string): Promise<Genre[]> {
         const genres = await this.genreModel.findAll({
-            where: { service: service ? service : ["kakao", "naver"] }
+            where: { service: service ? service : ["kakao", "naver"] },
         });
         return genres;
     }
@@ -38,30 +37,33 @@ export class GenreService {
     // 새로운 장르를 데이터베이스에 저장
     async createGenre(createGenreDto: CreateGenreDto) {
         const genre = await this.getGenre({
-            keyword: createGenreDto.keyword, 
+            keyword: createGenreDto.keyword,
         });
         if (genre) return;
 
         await this.genreModel.create({
-            ...createGenreDto
+            ...createGenreDto,
         });
-    };
+    }
 
     // 장르의 변환된 데이터만만 데이터베이스 업데이트
     async updateGenre(updateGenreDto: UpdateGenreDto) {
         const { keyword, service } = updateGenreDto;
 
         const genre = await this.getGenre({
-            keyword: updateGenreDto.keyword, 
-            service: updateGenreDto.service
+            keyword: updateGenreDto.keyword,
+            service: updateGenreDto.service,
         });
-        if (genre) return;
+        if (!genre) return;
 
-        await this.genreModel.update({
-            ...updateGenreDto
-        }, {
-            where: { keyword, service }
-        });
+        await this.genreModel.update(
+            {
+                ...updateGenreDto,
+            },
+            {
+                where: { keyword, service },
+            },
+        );
     }
 
     async deleteGenre(deleteGenreDto: DeleteGenreDto) {
@@ -71,22 +73,22 @@ export class GenreService {
         if (!genre) return;
 
         await this.genreModel.destroy({
-            where: { keyword }
+            where: { ...deleteGenreDto },
         });
     }
 
     async getKeywordDescription(keyword: string): Promise<string> {
         const prompt: ChatCompletionMessageParam[] = [
-            { role: "system", "content": "너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야."},
-            { role: "user", "content": `장르 키워드 ${keyword}의 뜻이 뭐야?`},
+            { role: "system", content: "너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야." },
+            { role: "user", content: `장르 키워드 ${keyword}의 뜻이 뭐야?` },
         ];
 
         const description = await this.openaiService.create_3_5_Completion(
             "ft:gpt-3.5-turbo-0613:personal::8AsbDlUd",
             prompt,
-            0.2,
-            150
-        )
+            0.4,
+            150,
+        );
 
         return description;
     }
@@ -124,7 +126,7 @@ export class GenreService {
             .replaceAll("\n", "")
             .replaceAll(".", "")
             .split("#######");
-        contents = contents.slice(0, contents.length-1);
+        contents = contents.slice(0, contents.length - 1);
 
         // 읽어온 데이터로 db 업데이트 하기
         const genreDescription: { [genre: string]: string } = {};
@@ -139,7 +141,7 @@ export class GenreService {
                 await this.createGenre({
                     keyword,
                     service,
-                    description
+                    description,
                 });
                 continue;
             }
@@ -148,14 +150,70 @@ export class GenreService {
         }
 
         // 읽어온 데이터에서 삭제된 장르는 db에서 삭제하기
-        const genres = await this.getAllGenre();
+        const genres = await this.getAllGenre(service);
         for (let genre of genres) {
             if (genre.keyword in genreDescription) {
                 continue;
             } else {
-                await this.deleteGenre({ keyword: genre.keyword });
+                await this.deleteGenre({ keyword: genre.keyword, service });
             }
         }
+    }
+
+    async updateEmbedding(service: string) {
+        const genres = await this.getAllGenre(service);
+
+        for (let genre of genres) {
+            const { keyword, service, description } = genre;
+            const embVector = await this.openaiService.createEmbedding(description);
+            const embVectorText = await JSON.stringify(embVector);
+
+            await this.updateGenre({
+                keyword,
+                service,
+                embVector: embVectorText,
+            });
+        }
+    }
+
+    async updateTransform(
+        service: string,
+        referService: string,
+    ): Promise<{ [keyword: string]: string }> {
+
+        const genres = await this.getAllGenre(service);
+        const referGenres = await this.getAllGenre(referService);
+        let result: { [keyword: string]: string } = {};
+
+        for (let genre of genres) {
+            let maxSimilarity = -1;
+            let similarKeyword = "";
+            for (let referGenre of referGenres) {
+                const embVector: number[] = await JSON.parse(genre.embVector);
+                const referEmbVector: number[] = await JSON.parse(referGenre.embVector);
+
+                const similarity = await this.openaiService.calcSimilarityFromEmbedding(
+                    embVector,
+                    referEmbVector,
+                );
+
+                if (similarity && maxSimilarity < similarity) {
+                    maxSimilarity = similarity;
+                    similarKeyword = referGenre.keyword;
+                }
+            }
+
+            if (similarKeyword) {
+                await this.updateGenre({
+                    keyword: genre.keyword,
+                    service: genre.service,
+                    transformed: similarKeyword,
+                });
+                result[genre.keyword] = similarKeyword;
+            }
+        }
+
+        return result;
     }
 
     async createKeywordFineTuningPrompt(service: string) {
@@ -170,7 +228,7 @@ export class GenreService {
             const messagesData: ChatCompletionMessageParam[] = [
                 { role: "system", content: systemMessage },
                 { role: "user", content: userMessage },
-                { role: "assistant", content: assistMessage }
+                { role: "assistant", content: assistMessage },
             ];
 
             const messages = { messages: messagesData };
@@ -181,24 +239,4 @@ export class GenreService {
         const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.jsonl");
         fs.writeFileSync(writePath, jsonlData, { encoding: "utf-8" });
     }
-
-    // calcSimilarityFromEmbedding(
-    //     embVector1: number[],
-    //     embVector2: number[]
-    // ): number {
-    //     const n: number = (
-    //         (embVector1.length !== embVector2.length) ? (
-    //             embVector1.length < embVector2.length ? embVector1.length : embVector2.length
-    //         ) : ( embVector1.length )
-    //     );
-        
-    //     let similarity: number = 0;
-    
-    //     for (let i = 0; i < n; i++) {
-    //         similarity += (embVector1[i] - embVector2[i]) ** 2;
-    //     }
-    //     similarity = Math.sqrt(similarity);
-    
-    //     return similarity;
-    // }
 }
