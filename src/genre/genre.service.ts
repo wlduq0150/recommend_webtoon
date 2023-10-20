@@ -1,10 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { OpenaiService } from 'src/openai/openai.service';
 import { WebtoonService } from 'src/webtoon/webtoon.service';
 
 import * as fs from "fs";
 import * as path from "path";
-import { GENRE_FOLDER } from 'src/constatns/genre.constants';
+import { GENRE_FOLDER, TRANSOFRM_FOLDER } from 'src/constatns/genre.constants';
 import { Genre } from 'src/sequelize/entity/genre.model';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from 'src/dto/genre.dto';
@@ -216,6 +216,41 @@ export class GenreService {
         return result;
     }
 
+    async updateTransformForFile(service: string) {
+        let transform: { [keyword: string]: string };
+        try {
+            const filePath = path.join(TRANSOFRM_FOLDER, `${service}Transform.json`);
+            transform  = require(filePath);
+        } catch (e) {
+            console.log(e);
+            throw new NotFoundException(`${service} 변환 파일이 존재하지 않습니다.`);
+        }
+        
+
+        // 읽어온 데이터로 db 업데이트 하기
+        for (let keyword of Object.keys(transform)) {
+            const transformed = transform[keyword];
+
+            const genre = await this.getGenre({ keyword });
+            if (!genre) {
+                console.log(`${keyword} is not exist.`);
+                continue;
+            }
+
+            await this.updateGenre({ keyword, service, transformed });
+        }
+
+        // 읽어온 데이터에서 삭제된 장르는 db에서 삭제하기
+        const genres = await this.getAllGenre(service);
+        for (let genre of genres) {
+            if (genre.keyword in transform) {
+                continue;
+            } else {
+                await this.deleteGenre({ keyword: genre.keyword, service });
+            }
+        }
+    }
+
     async createKeywordFineTuningPrompt(service: string) {
         const genres = await this.getAllGenre(service);
         let jsonlData = "";
@@ -238,5 +273,36 @@ export class GenreService {
 
         const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.jsonl");
         fs.writeFileSync(writePath, jsonlData, { encoding: "utf-8" });
+    }
+
+    async updateWebtoonGenreForTransform(service: string) {
+        const webtoons = await this.webtoonService.getAllWebtoonForOption({ service });
+
+        for (let webtoon of webtoons) {
+            const keywords: string[] = JSON.parse(webtoon.genres);
+
+            for (let [idx, keyword] of keywords.entries()) {
+                const genre = await this.getGenre({ keyword });
+                if (!genre) {
+                    console.log(`장르 키워드 ${keyword} 삭제 완료`);
+                    keywords.splice(idx, 1);
+                    continue;
+                }
+
+                if (service === "naver") {
+                    keywords[idx] = genre.transformed;
+                    console.log(`장르 키워드 ${keyword} => ${genre.transformed} 변환 완료`);
+                } else {
+                    continue;
+                }
+            }
+
+            const genreCount = keywords.length;
+            await this.webtoonService.updateWebtoonForOption({
+                webtoonId: webtoon.webtoonId,
+                genres: JSON.stringify(keywords),
+                genreCount
+            });
+        }
     }
 }

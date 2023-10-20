@@ -2,7 +2,9 @@ import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize
 import { User } from "./user.model";
 import { Webtoon } from "./webtoon.model";
 
-@Table
+@Table({
+    tableName: "UserWebtoon"
+})
 export class UserWebtoon extends Model {
     @ForeignKey(() => User)
     // @BelongsTo(() => User)

@@ -8,7 +8,7 @@ export class GenreController {
 
     @Get("test")
     async test() {
-        return this.genreService.updateTransform("naver", "kakao");
+        return this.genreService.updateTransformForFile("naver");
     }
     
 

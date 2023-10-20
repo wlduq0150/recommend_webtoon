@@ -21,10 +21,6 @@ export interface CrawlWebtoonOption {
     fanCount?: boolean;
 }
 
-export interface CrawlDayOption {
-    day: "월" | "화" | "수" | "목" | "금" | "토" | "일" | "완";
-}
-
 export interface CrawledWebtoon {
     webtoonId: string;
     title?: string;

@@ -2,7 +2,9 @@ import { Column, Model, Table, DataType, BelongsToMany } from 'sequelize-typescr
 import { UserWebtoon } from './userWebtoon.model';
 import { Webtoon } from './webtoon.model';
 
-@Table
+@Table({
+    tableName: "User",
+})
 export class User extends Model {
     @Column({ type: DataType.STRING, allowNull: false, unique: true})
     userId: string;

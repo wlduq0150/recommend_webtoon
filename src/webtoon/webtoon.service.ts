@@ -57,6 +57,12 @@ export class WebtoonService {
         return webtoon;
     }
 
+    // 캐시 없이 웹툰 가져오기
+    async getWebtoonForIdNoCache(id: string): Promise<Webtoon> {
+        const webtoon: Webtoon =  await this.webtoonModel.findOne({ where: { webtoonId: id }});
+        return webtoon;
+    }
+
 
     // 요일별 웹툰 가져오기(캐시)
     async getAllWebtoonForDay(day: string): Promise<Webtoon[]> {

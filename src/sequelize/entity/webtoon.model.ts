@@ -3,7 +3,9 @@ import { User } from "./user.model";
 import { UserWebtoon } from "./userWebtoon.model";
 
 
-@Table
+@Table({
+    tableName: "Webtoon"
+})
 export class Webtoon extends Model {
     @Column({ type: DataType.STRING, allowNull: false, unique: true})
     webtoonId: string;
@@ -46,4 +48,7 @@ export class Webtoon extends Model {
 
     @Column({ type: DataType.TEXT , allowNull: true})
     embVector: string;
+
+    @Column({ type: DataType.TEXT, allowNull: true })
+    embVectorDescription: string;
 }

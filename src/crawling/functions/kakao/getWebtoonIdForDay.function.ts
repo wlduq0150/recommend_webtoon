@@ -1,17 +1,16 @@
 import { Page } from "puppeteer";
 import * as cheerio from "cheerio";
-import { CrawlDayOption } from "src/types/webtoon.interface";
 import {
     KAKAO_DAY_TRANSFORM,
     KAKAO_DAY_WEBTOONLIST_SELECTOR,
 } from "src/constatns/crawling.constants";
 
-export async function getKakaoWebtoonIdForDay(page: Page, option: CrawlDayOption): Promise<string[]> {
+export async function getKakaoWebtoonIdForDay(page: Page, day: string): Promise<string[]> {
     const webtoonIdList: string[] = [];
 
     // 요일을 url에 들어갈 수 있게 바꿔줌
-    const day = KAKAO_DAY_TRANSFORM.indexOf(option.day);
-    await page.goto(`https://page.kakao.com/menu/10010/screen/52?tab_uid=${day}`);
+    const day_ = KAKAO_DAY_TRANSFORM.indexOf(day);
+    await page.goto(`https://page.kakao.com/menu/10010/screen/52?tab_uid=${day_}`);
 
     // 무한 스크롤링 방지
     while (true) {
