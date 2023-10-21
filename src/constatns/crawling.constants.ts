@@ -37,7 +37,7 @@ export const NAVER_DAY_CLICK_SELECTOR = "#wrap > header > div.SubNavigationBar__
 
 export const KAKAO_DAY_WEBTOONLIST_SELECTOR = "#__next > div > div.flex.w-full.grow.flex-col.px-122pxr > div > div.flex.grow.flex-col > div.mb-4pxr.flex-col > div > div.px-11pxr > div > div";
 
-export const DAY_LIST = ["월", "화", "수", "목", "금", "토", "일"];
+export const DAY_LIST = ["월", "화", "수", "목", "금", "토", "일", "완"];
 export const NAVER_DAY_TRANSFORM = ["", "mon", "tue", "wed", "thu", "fri", "sat", "sun", "", "", "", "", "finish"];
 export const KAKAO_DAY_TRANSFORM = ["", "월", "화", "수", "목", "금", "토", "일", "", "", "", "", "완"];
 

@@ -30,17 +30,13 @@ export class CrawlingService {
         });
         const page = await browser.newPage();
 
-        await page.setViewport({
-            width: 1280,
-            height: 720,
-        });
-
-        const webtoonId = await getNaverWebtoonIdForDay(page, "월");
+        const webtoon = await getNaverWebtoonForId(page, "813563");
+        console.log(webtoon);
 
         await page.close();
         await browser.close();
 
-        return webtoonId;
+        return webtoon;
     }
 
     async login(page: Page, service: string): Promise<boolean> {

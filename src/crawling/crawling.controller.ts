@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { CrawlingService } from './crawling.service';
 import { UpdateWebtoonPropertyDto } from 'src/dto/crawling.dto';
+import { getNaverWebtoonForId } from './functions/naver/getWebtoonForId.function';
 
 @Controller('crawling')
 export class CrawlingController {

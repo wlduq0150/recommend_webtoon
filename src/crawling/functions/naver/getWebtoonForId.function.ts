@@ -23,7 +23,8 @@ export async function getNaverWebtoonForId(
     try {
         await page.goto(`https://comic.naver.com/webtoon/list?titleId=${webtoonId}`);
         await page.waitForSelector(NAVER_EPISODELENGTH_WAIT_SELECTOR);
-    
+        await page.waitForSelector(NAVER_THUMBNAIL_SELECTOR);
+
         let content = await page.content();
         let $ = cheerio.load(content);
     
