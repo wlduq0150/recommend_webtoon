@@ -99,7 +99,7 @@ export async function getKakaoWebtoonForId(
         // 장르 키워드 크롤링
         if (!option || option.genres) {
             rootElement = $(KAKAO_GENRE_SELECTOR);
-            const genres: string[] = [ webtoon.category ];
+            const genres: string[] = [];
             rootElement.children().map((idx, element) => {
                 const t_obj: string = $(element).attr("data-t-obj");
                 const genre = t_obj ? JSON.parse(t_obj).click.copy : null;

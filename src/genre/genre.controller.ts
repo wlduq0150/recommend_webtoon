@@ -8,7 +8,7 @@ export class GenreController {
 
     @Get("test")
     async test() {
-        return this.genreService.updateTransformForFile("naver");
+        return this.genreService.updateWebtoonCategoryForTransform("naver");
     }
     
 

@@ -9,6 +9,7 @@ import { Genre } from 'src/sequelize/entity/genre.model';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from 'src/dto/genre.dto';
 import { OPENAI_JSONL_FOLDER_PATH } from 'src/constatns/openai.constants';
+import { UpdateWebtoonDto } from 'src/dto/webtoon.dto';
 
 @Injectable()
 export class GenreService {
@@ -46,7 +47,7 @@ export class GenreService {
         });
     }
 
-    // 장르의 변환된 데이터만만 데이터베이스 업데이트
+    // 장르의 변환된 데이터만 데이터베이스 업데이트
     async updateGenre(updateGenreDto: UpdateGenreDto) {
         const { keyword, service } = updateGenreDto;
 
@@ -66,6 +67,7 @@ export class GenreService {
         );
     }
 
+    // 장르 데이터 삭제
     async deleteGenre(deleteGenreDto: DeleteGenreDto) {
         const { keyword } = deleteGenreDto;
 
@@ -77,6 +79,32 @@ export class GenreService {
         });
     }
 
+    // 장르 DB의 장르 키워드 및 줄거리를 미세조정 학습에 필요한 jsonl 파일로 변환
+    async createKeywordFineTuningPrompt(service: string) {
+        const genres = await this.getAllGenre(service);
+        let jsonlData = "";
+
+        for (let genre of genres) {
+            const systemMessage = `너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야.`;
+            const userMessage = `장르 키워드 "${genre.keyword}"의 뜻이 뭐야?`;
+            const assistMessage = genre.description;
+
+            const messagesData: ChatCompletionMessageParam[] = [
+                { role: "system", content: systemMessage },
+                { role: "user", content: userMessage },
+                { role: "assistant", content: assistMessage },
+            ];
+
+            const messages = { messages: messagesData };
+
+            jsonlData += JSON.stringify(messages) + "\n";
+        }
+
+        const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.jsonl");
+        fs.writeFileSync(writePath, jsonlData, { encoding: "utf-8" });
+    }
+
+    // 장르 뜻 gpt에게 요청
     async getKeywordDescription(keyword: string): Promise<string> {
         const prompt: ChatCompletionMessageParam[] = [
             { role: "system", content: "너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야." },
@@ -93,6 +121,7 @@ export class GenreService {
         return description;
     }
 
+    // 해당 플랫폼의 장르 키워드 전부 gpt에게 요청 후 텍스트 파일에 저장
     async initKeyword(service: string) {
         const filePath = path.join(GENRE_FOLDER, `${service}Genre.json`);
         const writePath = path.join(GENRE_FOLDER, `${service}Genre.txt`);
@@ -116,6 +145,7 @@ export class GenreService {
         await fs.writeFileSync(writePath, initContent, { encoding: "utf-8" });
     }
 
+    // initKeyword 메서드로 생성된 텍스트 파일 수정후 DB 업데이트 
     async updateDescription(service: string): Promise<void> {
         // 수정된 파일에서 장르 및 의미 읽어오기
         const filePath = path.join(GENRE_FOLDER, `${service}Genre.txt`);
@@ -176,19 +206,23 @@ export class GenreService {
         }
     }
 
-    async updateTransform(
+    // service의 장르 키워드를 referService의 장르 키워드 중 유사한 것으로 변환
+    async initGenreTransform(
         service: string,
         referService: string,
     ): Promise<{ [keyword: string]: string }> {
-
+        // 각 플랫폼의 장르 불러오기
         const genres = await this.getAllGenre(service);
         const referGenres = await this.getAllGenre(referService);
         let result: { [keyword: string]: string } = {};
 
+
         for (let genre of genres) {
+            // 벡터간의 코사인 유사도는 -1 ~ 1 사이, 따라서 최솟값은 -1로 초기화
             let maxSimilarity = -1;
             let similarKeyword = "";
             for (let referGenre of referGenres) {
+                // 코사인 유사도 최댓값 찾기(가장 비슷한 단어 찾기)
                 const embVector: number[] = await JSON.parse(genre.embVector);
                 const referEmbVector: number[] = await JSON.parse(referGenre.embVector);
 
@@ -203,6 +237,7 @@ export class GenreService {
                 }
             }
 
+            // DB업데이트
             if (similarKeyword) {
                 await this.updateGenre({
                     keyword: genre.keyword,
@@ -216,10 +251,11 @@ export class GenreService {
         return result;
     }
 
-    async updateTransformForFile(service: string) {
+    // initGenreTransform 메서드로 초기화된 transform이 수정된 후 DB 업데이트
+    async updateGenreTransformForFile(service: string) {
         let transform: { [keyword: string]: string };
         try {
-            const filePath = path.join(TRANSOFRM_FOLDER, `${service}Transform.json`);
+            const filePath = path.join(TRANSOFRM_FOLDER, `${service}GenreTransform.json`);
             transform  = require(filePath);
         } catch (e) {
             console.log(e);
@@ -251,45 +287,72 @@ export class GenreService {
         }
     }
 
-    async createKeywordFineTuningPrompt(service: string) {
-        const genres = await this.getAllGenre(service);
-        let jsonlData = "";
+    async updateWebtoonCategoryForTransform(service: string) {
+        // 변환 파일 불러오기
+        const filePath = path.join(TRANSOFRM_FOLDER, `${service}CategoryTransform.json`);
+        const categoryTransform: { [category: string]: string } = require(filePath);
 
-        for (let genre of genres) {
-            const systemMessage = `너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야.`;
-            const userMessage = `장르 키워드 "${genre.keyword}"의 뜻이 뭐야?`;
-            const assistMessage = genre.description;
-
-            const messagesData: ChatCompletionMessageParam[] = [
-                { role: "system", content: systemMessage },
-                { role: "user", content: userMessage },
-                { role: "assistant", content: assistMessage },
-            ];
-
-            const messages = { messages: messagesData };
-
-            jsonlData += JSON.stringify(messages) + "\n";
-        }
-
-        const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.jsonl");
-        fs.writeFileSync(writePath, jsonlData, { encoding: "utf-8" });
-    }
-
-    async updateWebtoonGenreForTransform(service: string) {
+        // 해당 플랫폼 웹툰 전부 불러오기
         const webtoons = await this.webtoonService.getAllWebtoonForOption({ service });
 
         for (let webtoon of webtoons) {
-            const keywords: string[] = JSON.parse(webtoon.genres);
+            const { webtoonId, category } = webtoon;
+            const genres = JSON.parse(webtoon.genres);
+            
+            let updateDto: UpdateWebtoonDto = { webtoonId };
+
+            // 카테고리 변환
+            if (category in categoryTransform) {
+                const newCategory = categoryTransform[category];
+
+                updateDto.category = newCategory;
+
+                // 카테고리가 드라마일 경우 기존의 카테고리를 장르에 더한다.
+                if (newCategory === "드라마" && !genres.includes(category)) {
+                    const newGenres = [category, ...genres];
+                    updateDto.genres = JSON.stringify(newGenres);
+                    updateDto.genreCount = newGenres.length;
+                    console.log(`${category} => ${newGenres}`);
+                }
+
+                // DB업데이트
+                await this.webtoonService.updateWebtoonForOption(updateDto);
+
+                console.log(`카테고리 ${category} => ${newCategory} 변환 완료`);
+            } else {
+                console.log(`카테고리 ${category} 유지`);
+            }
+        }
+    }    
+
+    // Transform 파일을 통해 해당 서비스의 웹툰 장르 변환 및 삭제
+    async updateWebtoonGenreForTransform(service: string, referService: boolean) {
+        const webtoons = await this.webtoonService.getAllWebtoonForOption({ service });
+
+        for (let webtoon of webtoons) {
+            let keywords: string[] = JSON.parse(webtoon.genres);
+            let updateDto: UpdateWebtoonDto = { webtoonId: webtoon.webtoonId };
 
             for (let [idx, keyword] of keywords.entries()) {
+                console.log(idx, keyword);
                 const genre = await this.getGenre({ keyword });
-                if (!genre) {
-                    console.log(`장르 키워드 ${keyword} 삭제 완료`);
-                    keywords.splice(idx, 1);
+
+                // 네이버의 로판 키워드일 경우 카테고리로 바꾸고 장르는 삭제
+                if (keyword === "로판" && service === "naver") {
+                    keywords[idx] = "delete";
+                    updateDto.category = "로판";
                     continue;
                 }
 
-                if (service === "naver") {
+                // 장르 키워드가 DB에 없다면 삭제
+                if ( !genre || ( !referService && genre && genre.service !== service )) {
+                    console.log(`장르 키워드 ${keyword} 삭제 완료`);
+                    keywords[idx] = "delete";
+                    continue;
+                }
+
+                // 장르 변환
+                if (genre.transformed) {
                     keywords[idx] = genre.transformed;
                     console.log(`장르 키워드 ${keyword} => ${genre.transformed} 변환 완료`);
                 } else {
@@ -297,12 +360,18 @@ export class GenreService {
                 }
             }
 
+            // 장르 삭제 및 개수 다시 카운트
+            keywords = keywords.filter((keyword) => { return keyword !== "delete" });
             const genreCount = keywords.length;
-            await this.webtoonService.updateWebtoonForOption({
-                webtoonId: webtoon.webtoonId,
-                genres: JSON.stringify(keywords),
-                genreCount
-            });
+            console.log(keywords);
+
+            // 변경사항에 저장
+            updateDto.genres = JSON.stringify(keywords);
+            updateDto.genreCount = genreCount;
+            
+
+            // DB 장르 및 장르 개수 업데이트
+            await this.webtoonService.updateWebtoonForOption(updateDto);
         }
     }
 }

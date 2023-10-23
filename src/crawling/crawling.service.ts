@@ -12,7 +12,6 @@ import { getKakaoWebtoonForId } from './functions/kakao/getWebtoonForId.function
 import { getNaverWebtoonIdForDay } from './functions/naver/getWebtoonIdForDay.function';
 import { getKakaoWebtoonIdForDay } from './functions/kakao/getWebtoonIdForDay.function';
 import { DAY_LIST } from 'src/constatns/crawling.constants';
-import { InsertWebtoonDto } from 'src/dto/webtoon.dto';
 import { UpdateWebtoonPropertyDto } from 'src/dto/crawling.dto';
 
 @Injectable()

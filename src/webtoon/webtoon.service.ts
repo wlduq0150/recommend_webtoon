@@ -30,7 +30,7 @@ export class WebtoonService {
 
 
     async getWebtoonForId(id: string): Promise<Webtoon> {
-
+        await this.cacheManager.reset();
         // cache-key
         const webtoonCacheKey: string = `webtoonCache-${id}`; 
 
@@ -115,7 +115,7 @@ export class WebtoonService {
 	
     // 옵션에 맞는 웹툰 가져오기
     async getAllWebtoonForOption(option: SelectOption): Promise<Webtoon[]> {
-        let selectQeury: string = "SELECT * FROM Webtoons WHERE ";
+        let selectQeury: string = "SELECT * FROM Webtoon WHERE ";
 
         // 초기 조건 추가(AND를 쓰기위한 문법에 필요)
 
@@ -193,21 +193,6 @@ export class WebtoonService {
             { ...updateWebtoonDto },
             { where: { webtoonId } },
         );
-        
-        // category 변경시에는 genres의 첫번쨰 값도 같이 변경
-        if (updateWebtoonDto.category) {
-            const webtoon = await this.webtoonModel.findOne({ where: { webtoonId } });
-            const genres: string[] = JSON.parse(webtoon.genres);
-            const { category } = updateWebtoonDto;
-
-            // 변경된 category와 genres의 첫번째 값이 다를 경우에만 변경
-            if (genres[0] !== category) {
-                genres[0] = category;
-                const genresText: string = JSON.stringify(genres);
-
-                await this.updateWebtoonForOption({ webtoonId, genres: genresText });
-            }
-        }
 
         // 웹툰 수정, 삭제시 캐시된 값도 삭제
         const webtoonCacheKey: string = `webtoonCache-${webtoonId}`;
