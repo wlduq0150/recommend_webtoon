@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { WebtoonService } from './webtoon.service';
-import { InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
+import { CreateFineTunePrompt, InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
 
 @Controller('webtoon')
 export class WebtoonController {
@@ -25,6 +25,11 @@ export class WebtoonController {
     @Post("insertWebtoon")
     insertWebtoon(@Body() insertWebtoonDto: InsertWebtoonDto) {
         return this.webtoonService.insertWebtoon(insertWebtoonDto);
+    }
+
+    @Post("createFineTunePrompt")
+    createFineTunePrompt(@Body() createFineTunePrompt: CreateFineTunePrompt) {
+        return this.webtoonService.createFineTuningData(createFineTunePrompt);
     }
 
     @Patch("updateWebtoon")

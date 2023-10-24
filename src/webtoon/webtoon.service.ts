@@ -1,10 +1,16 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
+import { ChatCompletionMessageParam } from 'openai/resources';
 import { webtoonCacheTTL } from 'src/constatns/cache.constants';
-import { InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
+import { OPENAI_JSONL_FOLDER_PATH, OPENAI_JSON_FOLDER_PATH } from 'src/constatns/openai.constants';
+import { CreateFineTunePrompt, InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
 import { Webtoon } from 'src/sequelize/entity/webtoon.model';
 import { SelectOption } from 'src/types/webtoon.interface';
+import { genreToText } from './function/genreToText.function';
+import * as fs from "fs";
+import * as path from "path";
+
 
 @Injectable()
 export class WebtoonService {
@@ -30,7 +36,6 @@ export class WebtoonService {
 
 
     async getWebtoonForId(id: string): Promise<Webtoon> {
-        await this.cacheManager.reset();
         // cache-key
         const webtoonCacheKey: string = `webtoonCache-${id}`; 
 
@@ -124,11 +129,11 @@ export class WebtoonService {
         /// 조건 여부에 따른 쿼리 문자열 추가
 
         if (option.genreUpCount) {
-            selectQeury += `(LENGTH(genres) - LENGTH(REPLACE(genres, '"', ''))) / 2 > ${option.genreUpCount} `;
+            selectQeury += `AND (LENGTH(genres) - LENGTH(REPLACE(genres, '"', ''))) / 2 > ${option.genreUpCount} `;
         }
 
         if (option.genreDownCount) {
-            selectQeury += `(LENGTH(genres) - LENGTH(REPLACE(genres, '"', ''))) / 2 < ${option.genreDownCount} `;
+            selectQeury += `AND (LENGTH(genres) - LENGTH(REPLACE(genres, '"', ''))) / 2 < ${option.genreDownCount} `;
         }
 
         if (option.service) {
@@ -217,5 +222,37 @@ export class WebtoonService {
         await this.cacheManager.del(webtoonCacheKey);
 
         return true;
+    }
+
+    // 웹툰 테이블의 제목, 줄거리, 장르를 미세조정 형식인 json 파일로 변환
+    async createFineTuningData(createFineTunePrompt: CreateFineTunePrompt): Promise<number> {
+        const webtoons = await this.getAllWebtoonForOption({ ...createFineTunePrompt });
+        let jsonData: any[] = []; 
+
+        for (let webtoon of webtoons) {
+            const description = webtoon.description.replaceAll(/[\*\+#=\n]/g, "");
+
+            const systemMessage = `너는 웹툰의 제목과 카테고리, 줄거리를 읽고 장르의 뜻과 연관 지어서 분석 후 장르키워드를 알려주는 조수야`;
+            const userMessage = `제목: ${webtoon.title}\n\n카테고리: ${webtoon.category}\n\n줄거리: ${description}\n\n\n\n위 제목과 줄거리를 가진 웹툰의 장르 키워드를 알려줘`;
+            const assistMessage = genreToText(JSON.parse(webtoon.genres));
+
+            const messagesData: ChatCompletionMessageParam[] = [
+                { role: "system", content: systemMessage },
+                { role: "user", content: userMessage },
+                { role: "assistant", content: assistMessage },
+            ];
+
+            const messages = { messages: messagesData };
+
+            jsonData.push(messages);
+        }
+
+        const writePath = path.join(
+            OPENAI_JSON_FOLDER_PATH,
+            `webtoon_training_${createFineTunePrompt.category}.json`,
+        );
+        fs.writeFileSync(writePath, JSON.stringify(jsonData), { encoding: "utf-8" });
+
+        return webtoons.length;
     }
 }

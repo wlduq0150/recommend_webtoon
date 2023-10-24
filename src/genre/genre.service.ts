@@ -10,14 +10,38 @@ import { ChatCompletionMessageParam } from 'openai/resources';
 import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from 'src/dto/genre.dto';
 import { OPENAI_JSONL_FOLDER_PATH } from 'src/constatns/openai.constants';
 import { UpdateWebtoonDto } from 'src/dto/webtoon.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GenreService {
     constructor(
         @Inject("GENRE") private genreModel: typeof Genre,
+        private readonly configService: ConfigService,
         private readonly webtoonService: WebtoonService,
         private readonly openaiService: OpenaiService,
     ) {}
+
+    async test(webtoonId: string): Promise<string> {
+        // 웹툰 데이터 불러오기
+        const webtoon = await this.webtoonService.getWebtoonForId(webtoonId);
+        const description = webtoon.description.replaceAll(/[\*\+#=\n]/g, "");
+
+        // completion prompt 메세지 
+        const messages = this.openaiService.create_3_5_PromptMessage(
+            `너는 웹툰의 제목과 카테고리, 줄거리를 읽고 장르의 뜻과 연관 지어서 분석 후 줄거리의 뜻에 맞는 장르키워드를 알려주는 조수야`,
+            `제목: ${webtoon.title}\n\n카테고리: ${webtoon.category}\n\n줄거리: ${description}\n\n\n\n위 제목과 줄거리를 가진 웹툰의 장르 키워드를 가장 적합한 순서대로 알려줘`
+        );
+
+        // 장르 분석 요청
+        const result = await this.openaiService.create_3_5_Completion(
+            this.configService.get<string>("OPENAI_WEBTOON_GENRE_MODEL"),
+            messages,
+            0.45,
+            80
+        );
+
+        return result;
+    }
 
     // 모든 keyword 불러오기
     async getAllGenre(service?: string): Promise<Genre[]> {
@@ -82,7 +106,7 @@ export class GenreService {
     // 장르 DB의 장르 키워드 및 줄거리를 미세조정 학습에 필요한 jsonl 파일로 변환
     async createKeywordFineTuningPrompt(service: string) {
         const genres = await this.getAllGenre(service);
-        let jsonlData = "";
+        let jsonData: any[] = [];
 
         for (let genre of genres) {
             const systemMessage = `너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야.`;
@@ -96,12 +120,11 @@ export class GenreService {
             ];
 
             const messages = { messages: messagesData };
-
-            jsonlData += JSON.stringify(messages) + "\n";
+            jsonData.push(messages);
         }
 
-        const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.jsonl");
-        fs.writeFileSync(writePath, jsonlData, { encoding: "utf-8" });
+        const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.json");
+        fs.writeFileSync(writePath, JSON.stringify(jsonData), { encoding: "utf-8" });
     }
 
     // 장르 뜻 gpt에게 요청
@@ -122,7 +145,7 @@ export class GenreService {
     }
 
     // 해당 플랫폼의 장르 키워드 전부 gpt에게 요청 후 텍스트 파일에 저장
-    async initKeyword(service: string) {
+    async initGenreKeyword(service: string) {
         const filePath = path.join(GENRE_FOLDER, `${service}Genre.json`);
         const writePath = path.join(GENRE_FOLDER, `${service}Genre.txt`);
         const keywords: string[] = require(filePath);
@@ -146,7 +169,7 @@ export class GenreService {
     }
 
     // initKeyword 메서드로 생성된 텍스트 파일 수정후 DB 업데이트 
-    async updateDescription(service: string): Promise<void> {
+    async updateGenreDescription(service: string): Promise<void> {
         // 수정된 파일에서 장르 및 의미 읽어오기
         const filePath = path.join(GENRE_FOLDER, `${service}Genre.txt`);
         const readContent = await fs.readFileSync(filePath, { encoding: "utf-8" });
@@ -190,7 +213,7 @@ export class GenreService {
         }
     }
 
-    async updateEmbedding(service: string) {
+    async updateGenreEmbedding(service: string) {
         const genres = await this.getAllGenre(service);
 
         for (let genre of genres) {

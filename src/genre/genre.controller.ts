@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { GenreService } from './genre.service';
 
 @Controller('genre')
@@ -6,10 +6,11 @@ export class GenreController {
 
     constructor(private readonly genreService: GenreService) {}
 
-    @Get("test")
-    async test() {
-        return this.genreService.updateWebtoonCategoryForTransform("naver");
+    @Get("test/:id")
+    test(@Param("id") id: string) {
+        return this.genreService.test(id);
     }
+
     
 
 }

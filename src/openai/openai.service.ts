@@ -6,6 +6,7 @@ import {
     OPENAI_EMBEDDING_MODEL,
     OPENAI_FINETUNE_3_5_MODEL,
     OPENAI_JSONL_FOLDER_PATH,
+    OPENAI_JSON_FOLDER_PATH,
 } from "src/constatns/openai.constants";
 import { FineTuningJob } from "openai/resources/fine-tuning/jobs";
 
@@ -247,7 +248,9 @@ export class OpenaiService {
     }
 
     // json 파일은 jsonl파일로 변환
-    transformToJsonl(filePath: string): void {
+    transformToJsonl(filename: string): void {
+        const filePath = path.join(OPENAI_JSON_FOLDER_PATH, filename);
+        const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, path.basename(filePath, ".json") + ".jsonl");
         let jsonlData: string = "";
 
         const arr: any[] = require(filePath);
@@ -256,7 +259,7 @@ export class OpenaiService {
         });
 
         fs.writeFileSync(
-            OPENAI_JSONL_FOLDER_PATH + path.basename(filePath, ".json") + ".jsonl",
+            writePath,
             jsonlData,
             { encoding: "utf-8" },
         );

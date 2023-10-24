@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { OpenaiService } from './openai.service';
 import { OPENAI_JSONL_FOLDER_PATH } from 'src/constatns/openai.constants';
 import { CreateFileUploadDto, CreateFineTuneModelDto, Create_3_5_CompletionDto } from 'src/dto/openai.dto';
@@ -9,6 +9,11 @@ import * as path from "path";
 export class OpenaiController {
 
     constructor(private readonly openaiService: OpenaiService) {}
+
+    @Get("transformToJsonl/:filename")
+    transformToJsonl(@Param("filename") filename: string) {
+        return this.openaiService.transformToJsonl(filename);
+    }
 
     @Get("fileUploadList")
     getUploadFileList() {
