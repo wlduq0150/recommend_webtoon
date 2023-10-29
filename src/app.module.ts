@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { CrawlingModule } from './crawling/crawling.module';
 import { OpenaiModule } from './openai/openai.module';
 import { GenreModule } from './genre/genre.module';
+import { RecommendModule } from './recommend/recommend.module';
 
 @Module({
     imports: [
@@ -22,7 +23,8 @@ import { GenreModule } from './genre/genre.module';
       AuthModule,
       CrawlingModule,
       OpenaiModule,
-      GenreModule
+      GenreModule,
+      RecommendModule
     ],
     controllers: [AppController],
     providers: [AppService, DtoFilterProvider],

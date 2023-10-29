@@ -21,28 +21,6 @@ export class GenreService {
         private readonly openaiService: OpenaiService,
     ) {}
 
-    async test(webtoonId: string): Promise<string> {
-        // 웹툰 데이터 불러오기
-        const webtoon = await this.webtoonService.getWebtoonForId(webtoonId);
-        const description = webtoon.description.replaceAll(/[\*\+#=\n]/g, "");
-
-        // completion prompt 메세지 
-        const messages = this.openaiService.create_3_5_PromptMessage(
-            `너는 웹툰의 제목과 카테고리, 줄거리를 읽고 장르의 뜻과 연관 지어서 분석 후 줄거리의 뜻에 맞는 장르키워드를 알려주는 조수야`,
-            `제목: ${webtoon.title}\n\n카테고리: ${webtoon.category}\n\n줄거리: ${description}\n\n\n\n위 제목과 줄거리를 가진 웹툰의 장르 키워드를 가장 적합한 순서대로 알려줘`
-        );
-
-        // 장르 분석 요청
-        const result = await this.openaiService.create_3_5_Completion(
-            this.configService.get<string>("OPENAI_WEBTOON_GENRE_MODEL"),
-            messages,
-            0.45,
-            80
-        );
-
-        return result;
-    }
-
     // 모든 keyword 불러오기
     async getAllGenre(service?: string): Promise<Genre[]> {
         const genres = await this.genreModel.findAll({

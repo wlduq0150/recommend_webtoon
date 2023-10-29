@@ -20,6 +20,7 @@ export class WebtoonService {
         @Inject(CACHE_MANAGER) private cacheManager: Cache
     ) {}
 
+    
     async getAllWebtoon(): Promise<Webtoon[]> {
         return this.webtoonModel.findAll();
     }

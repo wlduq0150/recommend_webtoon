@@ -122,6 +122,11 @@ export class CreateFineTunePrompt {
     category: string;
 
     @IsOptional()
+    @IsString()
+    @ApiProperty({ description: '서비스' })
+    service: string;
+
+    @IsOptional()
     @IsNumber()
     @ApiProperty({ description: '장르 키워드 최소 개수' })
     genreUpCount: number;
