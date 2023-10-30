@@ -7,6 +7,7 @@ import { GenreProvider } from 'src/custom-provider/model.provider';
 
 @Module({
   imports: [WebtoonModule, OpenaiModule],
+  exports: [GenreService],
   controllers: [GenreController],
   providers: [GenreService, GenreProvider]
 })
