@@ -45,19 +45,21 @@ export class RecommendService {
     async createRecommendGenre(webtoonId: string): Promise<string[]> {
         const genreCounter: { [genre: string]: number } = {};
 
-        // 5번의 추천으로 각 키워드 마다 빈도 수 세기
-        for (let i=0; i<7; i++) {
-            const genreText = await this.createRecommendGenreText(webtoonId);
-            const genres = genreText.split(" ");
+        // 7번의 추천으로 각 키워드 마다 빈도 수 세기
+        const promiseArray = new Array(7).fill(() => this.createRecommendGenreText(webtoonId)).map((f) => f());
+        const genreText = await Promise.all<string>(promiseArray);
 
-            genres.forEach((genre) => {
-                if (genre in genreCounter) genreCounter[genre] += 1;
-                else genreCounter[genre] = 1;
-            });
-        }
+        const genres = genreText.join(" ").split(" ");
+        genres.forEach((genre) => {
+            if (genre in genreCounter) {
+                genreCounter[genre] += 1;
+            } else {
+                genreCounter[genre] = 1;
+            }
+        });
 
         // 가장 빈도 수가 높은 7개의 키워드만 추출
-        const genreCounterArray: [string, number][] = Object.entries(genreCounter);
+        const genreCounterArray = Object.entries(genreCounter);
         genreCounterArray.sort(
             (a: [string, number], b: [string, number]) => b[1] - a[1],
         );
