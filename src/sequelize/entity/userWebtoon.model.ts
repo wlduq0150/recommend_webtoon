@@ -3,7 +3,7 @@ import { User } from "./user.model";
 import { Webtoon } from "./webtoon.model";
 
 @Table({
-    tableName: "UserWebtoon"
+    tableName: "userwebtoon"
 })
 export class UserWebtoon extends Model {
     @ForeignKey(() => User)

@@ -123,16 +123,17 @@ export class CrawlingService {
                     service,
                 );
 
-                const isWebtoonCrawled = crawlWebtoon.title &&
-                crawlWebtoon.author &&
-                crawlWebtoon.category &&
-                crawlWebtoon.description &&
-                crawlWebtoon.episodeLength &&
-                crawlWebtoon.fanCount &&
-                crawlWebtoon.genreCount &&
-                crawlWebtoon.genres &&
-                crawlWebtoon.thumbnail &&
-                crawlWebtoon.updateDay;
+                const isWebtoonCrawled =
+                    crawlWebtoon.title &&
+                    crawlWebtoon.author &&
+                    crawlWebtoon.category &&
+                    crawlWebtoon.description &&
+                    crawlWebtoon.episodeLength &&
+                    crawlWebtoon.fanCount &&
+                    crawlWebtoon.genreCount &&
+                    crawlWebtoon.genres &&
+                    crawlWebtoon.thumbnail &&
+                    crawlWebtoon.updateDay;
                 // 모든 프로퍼티가 크롤링되었는지 확인 후 db에 저장
                 if ( isWebtoonCrawled ) {
                     await this.webtoonService.insertWebtoon({
