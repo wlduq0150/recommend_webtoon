@@ -2,7 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
-import { CreateRecommendWebtoonDto, InitRecommendGenreOptionDto } from 'src/dto/recommend.dto';
+import { CreateRecommendWebtoonDto, InitRecommendGenreOptionDto, RecommendWebtoonDto } from 'src/dto/recommend.dto';
 import { GenreService } from 'src/genre/genre.service';
 import { OpenaiService } from 'src/openai/openai.service';
 import { Webtoon } from 'src/sequelize/entity/webtoon.model';
@@ -209,5 +209,56 @@ export class RecommendService {
         
         // 웹툰의 id를 반환 (응답 시간 단축)
         return webtoons.map((webtoon) => webtoon.webtoonId);
+    }
+
+    async recommendWebtoon(
+        recommendWebtoonDto: RecommendWebtoonDto
+    ): Promise<String[]> {
+        const { userId, genres, category, episodeLength, newExcludeWebtoonIds } = recommendWebtoonDto;
+        // cache-key
+        const excludeWebtoonIdsCacheKey = `recommendExcludeCache-${userId}`;
+
+        // genres를 통해 전체 웹툰 추천 목록 생성
+        let recommendWebtoonIds = await this.createRecommendWebtoon({ genres, category, episodeLength });
+
+        console.log(recommendWebtoonIds);
+
+        // 사용자가 추천 받지 않는 제외 웹툰 목록 불러오기 및 업데이트
+        const excludeWebtoonIdsCache: string = await this.cacheManager.get(excludeWebtoonIdsCacheKey);
+        let excludeWebtoonIds = excludeWebtoonIdsCache ? JSON.parse(excludeWebtoonIdsCache) : [];
+
+        console.log("제외 목록: ", excludeWebtoonIds);
+
+        if (newExcludeWebtoonIds.length) {
+            newExcludeWebtoonIds.map(
+                (newExcludeWebtoonId) => {
+                    if (!excludeWebtoonIds.includes(newExcludeWebtoonId)) {
+                        excludeWebtoonIds.push(newExcludeWebtoonId);
+                    }
+                }
+            );
+        }
+
+        // 사용자가 이미 읽었던 웹툰 목록 불러오기
+        let userReadWebtoonIds: string[] = await this.userService.getUserReadWebtoonIds(userId);
+
+        // 전체 웹툰 추천 목록에서 읽은 웹툰과 제외 웹툰을 필터링
+        recommendWebtoonIds = recommendWebtoonIds.filter(
+            (webtoonId) => {
+                if (userReadWebtoonIds.includes(webtoonId) || excludeWebtoonIds.includes(webtoonId)) {
+                    return false;
+                }
+                return true;
+            }
+        );
+
+        // 캐싱
+        this.cacheManager.set(
+            excludeWebtoonIdsCacheKey,
+            JSON.stringify(excludeWebtoonIds),
+            120000,
+        );
+
+        return recommendWebtoonIds.slice(0, 3);
     }
 }

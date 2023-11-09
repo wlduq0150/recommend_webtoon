@@ -3,10 +3,9 @@ import { UserWebtoon } from './userWebtoon.model';
 import { Webtoon } from './webtoon.model';
 
 @Table({
-    tableName: "user",
+    tableName: "User",
 })
 export class User extends Model {
-    tableName: "user";
 
     @Column({ type: DataType.STRING, allowNull: false, unique: true})
     userId: string;

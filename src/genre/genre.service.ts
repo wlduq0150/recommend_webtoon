@@ -4,7 +4,7 @@ import { WebtoonService } from 'src/webtoon/webtoon.service';
 
 import * as fs from "fs";
 import * as path from "path";
-import { GENRE_FOLDER, TRANSOFRM_FOLDER } from 'src/constatns/genre.constants';
+import { CATEGORY_FOLDER, GENRE_FOLDER, TRANSOFRM_FOLDER } from 'src/constatns/genre.constants';
 import { Genre } from 'src/sequelize/entity/genre.model';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from 'src/dto/genre.dto';
@@ -25,8 +25,16 @@ export class GenreService {
     async getAllGenre(service?: string): Promise<Genre[]> {
         const genres = await this.genreModel.findAll({
             where: { service: service ? service : ["kakao", "naver"] },
+            attributes: { exclude: ["embVector"] }
         });
+        console.log(genres);
         return genres;
+    }
+
+    getAllCategory(service?: string): string[] {
+        const categoryPath = path.join(CATEGORY_FOLDER, `${service}Category.json`);
+        const categorys: string[] = require(categoryPath);
+        return categorys;
     }
 
     // keyword와 service를 통해 장르 불러오기

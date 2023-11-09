@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { RecommendService } from './recommend.service';
-import { CreateRecommendWebtoonDto, InitRecommendGenreOptionDto } from 'src/dto/recommend.dto';
+import { CreateRecommendWebtoonDto, InitRecommendGenreOptionDto, RecommendWebtoonDto } from 'src/dto/recommend.dto';
 
 @Controller('recommend')
 export class RecommendController {
@@ -30,6 +30,11 @@ export class RecommendController {
     @Post("createRecommendWebtoon")
     createRecommendWebtoon(@Body() createRecommendWebtoonDto: CreateRecommendWebtoonDto) {
         return this.recommendService.createRecommendWebtoon(createRecommendWebtoonDto);
+    }
+
+    @Post("recommend-webtoon")
+    recommendWebtoon(@Body() recommendWebtoonDto: RecommendWebtoonDto) {
+        return this.recommendService.recommendWebtoon(recommendWebtoonDto);
     }
 
 }

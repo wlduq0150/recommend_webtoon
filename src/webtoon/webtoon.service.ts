@@ -48,7 +48,11 @@ export class WebtoonService {
         }
 
         // database에서 해당 id의 웹툰 가져오기
-        const webtoon: Webtoon =  await this.webtoonModel.findOne({ where: { webtoonId: id }});
+        const webtoon: Webtoon = await this.webtoonModel.findOne({
+            where: { webtoonId: id },
+            attributes: { exclude: ["embVector", "embVectorDescription"] },
+        });
+        
         if (!webtoon) {
             throw new NotFoundException(`webtoonId ${id} is not exsit.`);
         }
