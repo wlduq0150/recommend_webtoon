@@ -11,15 +11,56 @@ import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from 'src
 import { OPENAI_JSONL_FOLDER_PATH } from 'src/constatns/openai.constants';
 import { UpdateWebtoonDto } from 'src/dto/webtoon.dto';
 import { ConfigService } from '@nestjs/config';
+import { GenreWebtoon } from 'src/sequelize/entity/genreWebtoon.model';
 
 @Injectable()
 export class GenreService {
     constructor(
         @Inject("GENRE") private genreModel: typeof Genre,
+        @Inject("GENREWEBTOON") private genreWebtoonModel: typeof GenreWebtoon,
         private readonly configService: ConfigService,
         private readonly webtoonService: WebtoonService,
         private readonly openaiService: OpenaiService,
     ) {}
+
+    async test(): Promise<void> {
+        try {
+            const webtoons = await this.webtoonService.getAllWebtoon();
+
+            for (let webtoon of webtoons) {
+                const keywords = JSON.parse(webtoon.genres);
+
+                for (let keyword of keywords) {
+                    const genre = await this.getGenre({ keyword, service: "kakao" });
+                    if (!genre) {
+                        console.log(keyword, "장르가 존재하지 않습니다.");
+                        continue;
+                    }
+
+                    const genreId = genre.id;
+                    const webtoonId = webtoon.id;
+
+                    const isExist = await this.genreWebtoonModel.findOne({
+                        where: { genreId, webtoonId }
+                    });
+
+                    if (isExist) {
+                        console.log(`이미 존재합니다.\n[${webtoonId}, ${genreId}]`);
+                        continue;
+                    }
+
+                    await this.genreWebtoonModel.create({
+                        genreId: genre.id,
+                        webtoonId: webtoon.id,
+                    });
+
+                    console.log(`\n\n[생성]\n웹툰id: ${webtoon.id}\n제목: ${webtoon.title}\n장르키워드: ${genre.keyword}`);
+                }
+            }
+        } catch(e) {
+            console.log(e);
+        }
+    }
 
     // 모든 keyword 불러오기
     async getAllGenre(service?: string): Promise<Genre[]> {
@@ -305,10 +346,10 @@ export class GenreService {
         const webtoons = await this.webtoonService.getAllWebtoonForOption({ service });
 
         for (let webtoon of webtoons) {
-            const { webtoonId, category } = webtoon;
+            const { id, category } = webtoon;
             const genres = JSON.parse(webtoon.genres);
             
-            let updateDto: UpdateWebtoonDto = { webtoonId };
+            let updateDto: UpdateWebtoonDto = { id };
 
             // 카테고리 변환
             if (category in categoryTransform) {
@@ -340,7 +381,7 @@ export class GenreService {
 
         for (let webtoon of webtoons) {
             let keywords: string[] = JSON.parse(webtoon.genres);
-            let updateDto: UpdateWebtoonDto = { webtoonId: webtoon.webtoonId };
+            let updateDto: UpdateWebtoonDto = { id: webtoon.id };
 
             for (let [idx, keyword] of keywords.entries()) {
                 console.log(idx, keyword);

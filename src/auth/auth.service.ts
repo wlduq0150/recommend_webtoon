@@ -26,7 +26,7 @@ export class AuthService {
 
         // 유저 refresh_token 업데이트
         await this.setUserCurrentRefreshToken(
-            user.userId,
+            user.email,
             refreshToken
         );
 
@@ -36,10 +36,10 @@ export class AuthService {
         };
     }
 
-    async logout(userId: string): Promise<void> {
+    async logout(email: string): Promise<void> {
         // DB의 currentRefreshToken 을 null로 교체
         await this.userService.updateUser({
-            userId,
+            email,
             currentRefreshToken: null
         });
     }
@@ -79,7 +79,7 @@ export class AuthService {
     // access_token 발급
     async createAccessToken(user: User): Promise<string> {
         const payload = {
-            userId: user.userId,
+            userId: user.id,
             name: user.name,
             age: user.age,
             sex: user.sex
@@ -99,7 +99,7 @@ export class AuthService {
     // refresh_token 발급
     async createRefreshToken(user: User): Promise<string> {
         const payload = {
-            userId: user.userId
+            userId: user.email
         };
 
         const refreshToken = await this.jwtService.signAsync(
@@ -114,8 +114,8 @@ export class AuthService {
     }
 
     // DB의 refresh_token과 현재 refresh_token 비교
-    async compareUserRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
-        const user = await this.userService.getUser(userId);
+    async compareUserRefreshToken(email: string, refreshToken: string): Promise<boolean> {
+        const user = await this.userService.getUser(email);
 
         // 사용자에게 저장된 refresh token이 없으면 false 반환
         if (!user.currentRefreshToken) return false;
@@ -128,7 +128,7 @@ export class AuthService {
     }
 
     // DB user 데이터에 refresh_token 저장
-    async setUserCurrentRefreshToken(userId: string, refreshToken: string): Promise<void> {
+    async setUserCurrentRefreshToken(email: string, refreshToken: string): Promise<void> {
         // refresh_token 암호화
         const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
         
@@ -139,7 +139,7 @@ export class AuthService {
 
         // DB 업데이트
         await this.userService.updateUser({
-            userId,
+            email,
             currentRefreshToken: hashedRefreshToken,
             currentRefreshTokenExp: refreshTokenExp
         });

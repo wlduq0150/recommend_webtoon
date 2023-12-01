@@ -82,13 +82,13 @@ export class RecommendService {
         });
 
         for (let webtoon of webtoons) {
-            const { webtoonId } = webtoon;
+            const { id } = webtoon;
             let genres: string[] = JSON.parse(webtoon.genres);
             // 최종적으로 기존의 순서를 유지하기 배열을 뒤집는다. 
             genres = genres.reverse();
 
             // 웹툰 장르를 gpt에게 요청해서 받아오기
-            let recommendGenres = await this.createRecommendGenre(webtoonId);
+            let recommendGenres = await this.createRecommendGenre(id);
 
             // 추천 받은 장르가 원래 장르에 이미 포함되어 있다면 순서를 앞으로 조정
             for (let [genre, idx] of genres) {
@@ -109,7 +109,7 @@ export class RecommendService {
             );
 
             await this.webtoonService.updateWebtoonForOption({
-                webtoonId,
+                id,
                 genres: JSON.stringify(recommendGenres),
                 genreCount: recommendGenres.length
             });
@@ -142,7 +142,7 @@ export class RecommendService {
 
             // DB업데이트
             await this.webtoonService.updateWebtoonForOption({
-                webtoonId: webtoon.webtoonId,
+                id: webtoon.id,
                 embVector,
             });
         }
@@ -156,14 +156,14 @@ export class RecommendService {
 
         for (let webtoon of webtoons) {
 
-            const { webtoonId, description } = webtoon;
+            const { id, description } = webtoon;
 
             // 줄거리 임베딩 벡터를 생성후 문자열로 변환
             const embVectorDescription = JSON.stringify(await this.openaiService.createEmbedding(description));
 
             // DB업데이트
             await this.webtoonService.updateWebtoonForOption({
-                webtoonId,
+                id,
                 embVectorDescription,
             });
         }
@@ -194,7 +194,7 @@ export class RecommendService {
 
         for (let webtoon of webtoons) {
             if (webtoon.embVector) {
-                similarityComapre[webtoon.webtoonId] =
+                similarityComapre[webtoon.id] =
                     await this.openaiService.calcSimilarityFromEmbedding(
                         InputEmbVector,
                         JSON.parse(webtoon.embVector),
@@ -204,11 +204,11 @@ export class RecommendService {
 
         // similarityComapre를 통해 요청된 장르와 웹툰들 장르의 유사도를 비교하며 정렬
         webtoons.sort((a, b) => {
-            return similarityComapre[b.webtoonId] - similarityComapre[a.webtoonId];
+            return similarityComapre[b.id] - similarityComapre[a.id];
         });
         
         // 웹툰의 id를 반환 (응답 시간 단축)
-        return webtoons.map((webtoon) => webtoon.webtoonId);
+        return webtoons.map((webtoon) => webtoon.id);
     }
 
     async recommendWebtoon(

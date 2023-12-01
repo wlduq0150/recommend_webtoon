@@ -57,7 +57,7 @@ export class UpdateWebtoonDto {
     @IsNotEmpty()
     @IsString()
     @ApiProperty({ description: '웹툰 아이디' })
-    webtoonId: string;
+    id: string;
 
     @IsOptional()
     @IsString()

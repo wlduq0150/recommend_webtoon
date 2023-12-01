@@ -207,7 +207,7 @@ export class CrawlingService {
                 // 정상적으로 크롤링 됐는지 확인 후 db 업데이트
                 if (crawlWebtoon[property]) {
                     await this.webtoonService.updateWebtoonForOption({
-                        webtoonId,
+                        id: webtoonId,
                         [property]: crawlWebtoon[property]
                     });
                 } else {

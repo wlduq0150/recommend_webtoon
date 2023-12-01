@@ -13,7 +13,7 @@ export class UserController {
     async getUser(@Param("id") userId: string) {
         const user = await this.userService.getUser(userId);
         const transformedUser = {
-            userId: user.userId,
+            email: user.email,
             name: user.name,
             age: user.age,
             sex: user.sex,

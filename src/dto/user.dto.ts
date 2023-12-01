@@ -3,8 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateUserDataDto {
     @IsString()
-    @ApiProperty({ description: '아이디' })
-    userId: string;
+    @ApiProperty({ description: '이메일' })
+    email: string;
 
     @IsString()
     @ApiProperty({ description: '비밀번호' })
@@ -31,8 +31,8 @@ export class CreateUserDataDto {
 export class UpdateUserDataDto {
     @IsNotEmpty()
     @IsString()
-    @ApiProperty({ description: '아이디' })
-    userId: string; 
+    @ApiProperty({ description: '이메일' })
+    email: string; 
 
     @IsString()
     @IsOptional()

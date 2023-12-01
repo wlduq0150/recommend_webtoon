@@ -6,6 +6,11 @@ export class GenreController {
 
     constructor(private readonly genreService: GenreService) {}
 
+    @Get("test")
+    test() {
+        return this.genreService.test();
+    }
+
     @Get("genre-keyword")
     getGenreKeyword() {
         return this.genreService.getAllGenre("kakao");

@@ -49,7 +49,7 @@ export class WebtoonService {
 
         // database에서 해당 id의 웹툰 가져오기
         const webtoon: Webtoon = await this.webtoonModel.findOne({
-            where: { webtoonId: id },
+            where: { id },
             attributes: { exclude: ["embVector", "embVectorDescription"] },
         });
         
@@ -69,7 +69,7 @@ export class WebtoonService {
 
     // 캐시 없이 웹툰 가져오기
     async getWebtoonForIdNoCache(id: string): Promise<Webtoon> {
-        const webtoon: Webtoon =  await this.webtoonModel.findOne({ where: { webtoonId: id }});
+        const webtoon: Webtoon =  await this.webtoonModel.findOne({ where: { id }});
         return webtoon;
     }
 
@@ -178,7 +178,7 @@ export class WebtoonService {
 
     async insertWebtoon(insertWebtoonDto: InsertWebtoonDto): Promise<boolean> {
         const { webtoonId } = insertWebtoonDto;
-        const webtoon = await this.webtoonModel.findOne({ where: { webtoonId } })
+        const webtoon = await this.webtoonModel.findOne({ where: { id: webtoonId } })
 
         if (webtoon) {
             throw new ConflictException(`webtoonId ${webtoonId} is already exist.`);
@@ -196,16 +196,16 @@ export class WebtoonService {
     // Patch
 
     async updateWebtoonForOption(updateWebtoonDto: UpdateWebtoonDto): Promise<boolean> {
-        const { webtoonId }: { webtoonId: string } = updateWebtoonDto;
-        await this.getWebtoonForId(webtoonId);
+        const { id }: { id: string } = updateWebtoonDto;
+        await this.getWebtoonForId(id);
 
         await this.webtoonModel.update(
             { ...updateWebtoonDto },
-            { where: { webtoonId } },
+            { where: { id } },
         );
 
         // 웹툰 수정, 삭제시 캐시된 값도 삭제
-        const webtoonCacheKey: string = `webtoonCache-${webtoonId}`;
+        const webtoonCacheKey: string = `webtoonCache-${id}`;
         await this.cacheManager.del(webtoonCacheKey);
 
         return true;
@@ -219,7 +219,7 @@ export class WebtoonService {
         await this.getWebtoonForId(id);
 
         await this.webtoonModel.destroy(
-            { where: { webtoonId: id }
+            { where: { id }
         });
 
         // 웹툰 수정, 삭제시 캐시된 값도 삭제
