@@ -1,15 +1,18 @@
-import { BelongsToMany, Column, DataType, Model, Table } from "sequelize-typescript";
+import { BelongsToMany, Column, DataType, HasMany, Model, Table } from "sequelize-typescript";
 import { User } from "./user.model";
 import { UserWebtoon } from "./userWebtoon.model";
+import { Genre } from "./genre.model";
+import { GenreWebtoon } from "./genreWebtoon.model";
+import { Comment } from "./comments.model";
 
 
 @Table({
-    tableName: "Webtoon"
+    tableName: "webtoons"
 })
 export class Webtoon extends Model {
 
-    @Column({ type: DataType.STRING, allowNull: false, unique: true})
-    webtoonId: string;
+    @Column({ type: DataType.STRING, allowNull: false, primaryKey: true })
+    id: string;
 
     @Column({ type: DataType.STRING, allowNull: false})
     title: string;
@@ -44,12 +47,15 @@ export class Webtoon extends Model {
     @Column({ type: DataType.INTEGER, allowNull: true})
     fanCount: number;
 
-    @BelongsToMany(() => User, () => UserWebtoon)
-    users: User[];
-
     @Column({ type: DataType.TEXT , allowNull: true})
     embVector: string;
 
-    @Column({ type: DataType.TEXT, allowNull: true })
-    embVectorDescription: string;
+    @HasMany(() => Comment)
+    comments: Comment[];
+
+    @BelongsToMany(() => User, () => UserWebtoon)
+    users: User[];
+
+    @BelongsToMany(() => Genre, () => GenreWebtoon)
+    genres_: Genre[];
 }

@@ -1,6 +1,10 @@
-import { Column, DataType, Model, Table } from "sequelize-typescript";
+import { BelongsToMany, Column, DataType, Model, Table } from "sequelize-typescript";
+import { Webtoon } from "./webtoon.model";
+import { GenreWebtoon } from "./genreWebtoon.model";
 
-@Table
+@Table({
+    tableName: "genres",
+})
 export class Genre extends Model {
 
     @Column({ type: DataType.STRING, allowNull: false, unique: true})
@@ -17,5 +21,8 @@ export class Genre extends Model {
 
     @Column({ type: DataType.STRING, allowNull: true })
     transformed: string;
+
+    @BelongsToMany(() => Webtoon, () => GenreWebtoon)
+    webtoons: Webtoon[];
     
 }

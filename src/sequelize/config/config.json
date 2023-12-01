@@ -1,9 +1,9 @@
 {
   "development": {
     "username": "root",
-    "password": null,
-    "database": "database_development",
-    "host": "127.0.0.1",
+    "password": "wlduq0160",
+    "database": "wlduq0150",
+    "host": "nest-database.c0mrakurnszp.ap-northeast-2.rds.amazonaws.com",
     "dialect": "mysql"
   },
   "test": {

@@ -1,18 +1,18 @@
 import { Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
-import { User } from "./user.model";
 import { Webtoon } from "./webtoon.model";
+import { Genre } from "./genre.model";
 
 @Table({
-    tableName: "userwebtoon"
+    tableName: "genrewebtoon"
 })
-export class UserWebtoon extends Model {
+export class GenreWebtoon extends Model {
 
     @Column({ type: DataType.INTEGER, allowNull: false, primaryKey: true, autoIncrement: true })
     id: number;
     
-    @ForeignKey(() => User)
+    @ForeignKey(() => Genre)
     @Column
-    userId: number;
+    genreId: number;
 
     @ForeignKey(() => Webtoon)
     @Column

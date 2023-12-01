@@ -6,6 +6,8 @@ import { Webtoon } from './entity/webtoon.model';
 import { User } from './entity/user.model';
 import { Sequelize } from 'sequelize-typescript';
 import { Genre } from './entity/genre.model';
+import { GenreWebtoon } from './entity/genreWebtoon.model';
+import { Comment } from './entity/comments.model';
 
 @Module({})
 export class MysqlSequelizeModule {
@@ -32,7 +34,7 @@ export class MysqlSequelizeModule {
                 username: configService.get<string>('DATABASE_USERNAME'), // 설정에서 username 가져오기
                 password: configService.get<string>('DATABASE_PASSWORD'), // 설정에서 password 가져오기
                 database: configService.get<string>('DATABASE_NAME'), // 설정에서 database 이름 가져오기
-                models: [User, Webtoon, UserWebtoon, Genre],
+                models: [User, Webtoon, Genre, UserWebtoon, GenreWebtoon, Comment],
                 synchronize: true,
             }),
             inject: [ConfigService]

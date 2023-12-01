@@ -1,14 +1,18 @@
-import { Column, Model, Table, DataType, BelongsToMany } from 'sequelize-typescript';
+import { Column, Model, Table, DataType, BelongsToMany, HasMany } from 'sequelize-typescript';
 import { UserWebtoon } from './userWebtoon.model';
 import { Webtoon } from './webtoon.model';
+import { Comment } from './comments.model';
 
 @Table({
-    tableName: "User",
+    tableName: "users",
 })
 export class User extends Model {
 
+    @Column({ type: DataType.INTEGER, allowNull: false, primaryKey: true, autoIncrement: true })
+    id: number;
+
     @Column({ type: DataType.STRING, allowNull: false, unique: true})
-    userId: string;
+    email: string;
 
     @Column({ type: DataType.STRING, allowNull: false})
     password: string;
@@ -27,6 +31,9 @@ export class User extends Model {
 
     @BelongsToMany(() => Webtoon, () => UserWebtoon)
     readWebtoons: Webtoon[];
+
+    @HasMany(() => Comment)
+    comments: Comment[];
 
     @Column({ type: DataType.STRING, allowNull: true, defaultValue: null })
     currentRefreshToken?: string;
