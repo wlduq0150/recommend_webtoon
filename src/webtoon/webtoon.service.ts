@@ -125,7 +125,7 @@ export class WebtoonService {
 	
     // 옵션에 맞는 웹툰 가져오기
     async getAllWebtoonForOption(option: SelectOption): Promise<Webtoon[]> {
-        let selectQeury: string = "SELECT * FROM Webtoon WHERE ";
+        let selectQeury: string = "SELECT * FROM webtoons WHERE ";
 
         // 초기 조건 추가(AND를 쓰기위한 문법에 필요)
 
@@ -166,7 +166,8 @@ export class WebtoonService {
             data = (await this.webtoonModel.sequelize.query(selectQeury)) as (Webtoon[])[];
             webtoonList = data[0];
         } catch (e) {
-            throw new NotFoundException("option is wrong");
+            console.log(e);
+            throw new NotFoundException("웹툰 검색 옵션이 잘못되었습니다.");
         }
 
         return webtoonList;

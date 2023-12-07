@@ -5,6 +5,7 @@ import { Request } from "express";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { RefreshTokenPayload } from "src/types/auth.interface";
 import { AuthService } from "../auth.service";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, "refresh_token") {
@@ -12,37 +13,38 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, "refresh
     constructor(
         private readonly configService: ConfigService,
         private readonly authService: AuthService,
+        private readonly jwtService: JwtService
     ) {
         super({
             // access token strategy와 동일
             jwtFromRequest: ExtractJwt.fromExtractors([
-                (request) => { return request?.cookies?.refresh_token }
+                (req) => { return req.headers.authorization.replace("Bearer ", ""); }
             ]), 
             secretOrKey: configService.get<string>("JWT_REFRESH_TOKEN_SECRET"),
-            ignoreExpiration: false,
+            ignoreExpiration: true,
             passReqToCallback: true
         });
     }
 
     async validate(req: Request, payload: RefreshTokenPayload) {
-        const refreshToken = req?.cookies?.refresh_token;
+        try {
+            const token = req.headers.authorization.replace("Bearer ", "");
 
-        // refresh token이 없을 경우 예외 발생
-        if (!refreshToken) {
-            throw new UnauthorizedException("refresh token is undefined");
+            await this.jwtService.verify(token, {
+                secret: this.configService.get<string>("JWT_REFRESH_TOKEN_SECRET"),
+            });
+
+            req.user = {
+                ...payload,
+                refreshToken: token
+            };
+            return req.user;
+        } catch (e) {
+            if (e.message === "jwt expired") {
+                throw new UnauthorizedException("refreshToken expired");
+            }
+
+            throw new UnauthorizedException("invalid refreshToken");
         }
-
-        // 저장된 refresh token과 비교
-        const result = await this.authService.compareUserRefreshToken(
-            payload.userId,
-            refreshToken
-        );
-        // 결과가 틀렸다면 예외 발생
-        if (!result) {
-            throw new UnauthorizedException("refresh token is wrong");
-        }
-        req.user = payload;
-
-        return payload;
     }
 }

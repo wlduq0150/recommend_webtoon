@@ -49,9 +49,9 @@ export class RecommendWebtoonDto {
     @ApiProperty({ description: '분류' })
     category: string;
 
-    @IsString()
+    @IsNumber()
     @ApiProperty({ description: '유저 id' })
-    userId: string;
+    userId: number;
 
     @IsString({ each: true })
     @ApiProperty({ description: '장르 목록' })

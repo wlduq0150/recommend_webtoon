@@ -16,8 +16,8 @@ export class UserService {
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
     ) {}
 
-    async getUser(email: string): Promise<User> {
-        const userCacheKey: string = `userCache-${email}`;
+    async getUserById(id: number): Promise<User> {
+        const userCacheKey: string = `userCache-id${id}`;
 
         const userCache: string = await this.cacheManager.get(userCacheKey);
         if (userCache) {
@@ -27,11 +27,11 @@ export class UserService {
 
         // currentRefreshToken을 제외한 사용자 정보를 id를 통해 가져오기
         const exUser: User = await this.userModel.findOne({
-            where: { email },
+            where: { id },
         });
         // 사용자가 없다면 에러 throw
         if (!exUser) { 
-            throw new NotFoundException(`userId ${email} is not exist.`);
+            throw new NotFoundException(`userId ${id} is not exist.`);
         }
 
         await this.cacheManager.set(
@@ -43,7 +43,16 @@ export class UserService {
         return exUser;
     }
 
-    async getUserReadWebtoonIds(userId: string): Promise<string[]> {
+    async getUserByEmail(email: string): Promise<User> {
+        // currentRefreshToken을 제외한 사용자 정보를 email을 통해 가져오기
+        const exUser: User = await this.userModel.findOne({
+            where: { email },
+        });
+        
+        return exUser;
+    }
+
+    async getUserReadWebtoonIds(userId: number): Promise<string[]> {
         const userReadCacheKey: string = `userReadCache-${userId}`;
 
         const userReadCache: string = await this.cacheManager.get(userReadCacheKey);
@@ -51,11 +60,11 @@ export class UserService {
             return JSON.parse(userReadCache);
         }
 
-        const exUser: User = await this.getUser(userId);
+        const exUser: User = await this.getUserById(userId);
 
         // 사용자가 이미 읽은 웹툰 목록 
         const readWebtoons: Webtoon[] = await exUser.$get("readWebtoons", {
-            attributes: ["webtoonId"],
+            attributes: ["id"],
         });
 
         // 웹툰 목록을 id 배열로 바꾸기
@@ -74,17 +83,14 @@ export class UserService {
 
     async createUser(createUserData: CreateUserDataDto): Promise<boolean> {
         const { email, password } = createUserData;
-        // 비밀번호 암호화
-        const hashPassword = await bcrypt.hash(password, 10);
 
-        const exUser = await this.userModel.findOne({ where: { email } });
+        const exUser = await this.getUserByEmail(email);
         if (exUser) {
             throw new ConflictException(`userId ${email} is already exist.`);
         }
 
         await this.userModel.create({
-            ...createUserData,
-            password: hashPassword, // 데이터베이스에는 암호환된 비밀번호 저장
+            ...createUserData, // 데이터베이스에는 암호환된 비밀번호 저장
         });
         
         console.log(`[Info]userId ${email} is created.`);
@@ -92,36 +98,36 @@ export class UserService {
         return true;
     }
 
-    async deleteUser(email: string): Promise<boolean> {
-        await this.getUser(email);
+    async deleteUser(id: number): Promise<boolean> {
+        await this.getUserById(id);
 
         await this.userModel.destroy({
-            where: { email },
+            where: { id },
         });
 
-        const userCacheKey: string = `userCache-${email}`;
+        const userCacheKey: string = `userCache-id${id}`;
         await this.cacheManager.del(userCacheKey);
 
-        console.log(`[Info]userId ${email} is removed.`);
+        console.log(`[Info]userId ${id} is removed.`);
 
         return true;
     }
 
     async updateUser(updateUserData: UpdateUserDataDto): Promise<boolean> {
-        const { email }: { email: string } = updateUserData;
-        await this.getUser(email);
+        const { id }: { id: number } = updateUserData;
+        await this.getUserById(id);
 
         // updateUserData의 있는 변경된 사항들만 update
         this.userModel.update({
             ...updateUserData,
         }, {
-            where: { email },
+            where: { id },
         });
 
-        const userCacheKey: string = `userCache-${email}`;
+        const userCacheKey: string = `userCache-id${id}`;
         await this.cacheManager.del(userCacheKey);
 
-        console.log(`[Info]userId ${email} is changed.`);
+        console.log(`[Info]userId ${id} is changed.`);
 
         return true;
     }

@@ -68,7 +68,6 @@ export class GenreService {
             where: { service: service ? service : ["kakao", "naver"] },
             attributes: { exclude: ["embVector"] }
         });
-        console.log(genres);
         return genres;
     }
 

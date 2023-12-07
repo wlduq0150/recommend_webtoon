@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { RecommendService } from './recommend.service';
 import { CreateRecommendWebtoonDto, InitRecommendGenreOptionDto, RecommendWebtoonDto } from 'src/dto/recommend.dto';
+import { JwtAccessTokenGuard } from 'src/auth/guard/accessToken.guard';
 
 @Controller('recommend')
 export class RecommendController {
@@ -32,6 +33,7 @@ export class RecommendController {
         return this.recommendService.createRecommendWebtoon(createRecommendWebtoonDto);
     }
 
+    @UseGuards(JwtAccessTokenGuard)
     @Post("recommend-webtoon")
     recommendWebtoon(@Body() recommendWebtoonDto: RecommendWebtoonDto) {
         return this.recommendService.recommendWebtoon(recommendWebtoonDto);

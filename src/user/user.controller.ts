@@ -10,8 +10,8 @@ export class UserController {
 
     @UseGuards(JwtAccessTokenGuard)
     @Get(":id")
-    async getUser(@Param("id") userId: string) {
-        const user = await this.userService.getUser(userId);
+    async getUser(@Param("id") userId: number) {
+        const user = await this.userService.getUserById(userId);
         const transformedUser = {
             email: user.email,
             name: user.name,
@@ -23,7 +23,7 @@ export class UserController {
     }
 
     @Get("/:id/readWebtoons")
-    getUserReadWebtoons(@Param("id") userId: string) {
+    getUserReadWebtoons(@Param("id") userId: number) {
         return this.userService.getUserReadWebtoonIds(userId);
     }
 
@@ -38,7 +38,7 @@ export class UserController {
     }
 
     @Delete(":id")
-    deleteUser(@Param("id") userId: string) {
+    deleteUser(@Param("id") userId: number) {
         return this.userService.deleteUser(userId);
     }
 }

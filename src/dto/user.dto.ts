@@ -30,9 +30,14 @@ export class CreateUserDataDto {
 // CreateUserDataDto의 속성들을 partial(선택적)으로 해서 확장한다.
 export class UpdateUserDataDto {
     @IsNotEmpty()
+    @IsNumber()
+    @ApiProperty({ description: '유저 id' })
+    id: number;
+
+    @IsOptional()
     @IsString()
-    @ApiProperty({ description: '이메일' })
-    email: string; 
+    @ApiPropertyOptional({ description: '이메일' })
+    email?: string; 
 
     @IsString()
     @IsOptional()

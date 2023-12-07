@@ -12,5 +12,5 @@ export interface AccessTokenPayload {
 }
 
 export interface RefreshTokenPayload {
-    userId: string;
+    userId: number;
 }

@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LoginDto } from 'src/dto/auth.dto';
+import { LoginDto, SignupDto } from 'src/dto/auth.dto';
 import { User } from 'src/sequelize/entity/user.model';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
@@ -18,6 +18,28 @@ export class AuthService {
         private readonly configService: ConfigService
     ) {}
 
+    async emailCheck(email: string) {
+        const user = await this.userService.getUserByEmail(email);
+
+        if (user) {
+            return false;
+        }
+
+        return true;
+    }
+
+    async signup(signupDto: SignupDto): Promise<boolean> {
+        const { password } = signupDto;
+        
+        // 비밀번호 암호화
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        return await this.userService.createUser({
+            ...signupDto,
+            password: hashPassword
+        });
+    }
+
     async login(loginDto: LoginDto): Promise<TokenData> {
         // 유저 인증 및 토큰 발급
         const user = await this.validateUser(loginDto);
@@ -26,7 +48,7 @@ export class AuthService {
 
         // 유저 refresh_token 업데이트
         await this.setUserCurrentRefreshToken(
-            user.email,
+            user.id,
             refreshToken
         );
 
@@ -36,23 +58,23 @@ export class AuthService {
         };
     }
 
-    async logout(email: string): Promise<void> {
+    async logout(id: number): Promise<void> {
         // DB의 currentRefreshToken 을 null로 교체
         await this.userService.updateUser({
-            email,
+            id,
             currentRefreshToken: null
         });
     }
 
-    async refresh(userId: string, refreshToken: string): Promise<TokenData> {
+    async refresh(id: number, refreshToken: string): Promise<TokenData> {
         // DB의 refresh token과 현재 토큰 비교
-        const result = this.compareUserRefreshToken(userId, refreshToken);
+        const result = this.compareUserRefreshToken(id, refreshToken);
         if (!result) {
-            throw new UnauthorizedException("You need to log in first");
+            throw new UnauthorizedException("invalid refreshToken");
         }
 
         // 새로운 access token 발급
-        const user = await this.userService.getUser(userId);
+        const user = await this.userService.getUserById(id);
         const accessToken = await this.createAccessToken(user);
 
         return {
@@ -63,9 +85,9 @@ export class AuthService {
 
     // 유저 id, password 확인
     async validateUser(loginDto: LoginDto): Promise<User> {
-        const { userId, password } = loginDto;
+        const { email, password } = loginDto;
 
-        const user = await this.userService.getUser(userId);
+        const user = await this.userService.getUserByEmail(email);
 
         // 비밀번호 비교
         const comparePassword = await bcrypt.compare(password, user.password);
@@ -80,9 +102,6 @@ export class AuthService {
     async createAccessToken(user: User): Promise<string> {
         const payload = {
             userId: user.id,
-            name: user.name,
-            age: user.age,
-            sex: user.sex
         };
 
         const access_token = await this.jwtService.signAsync(
@@ -99,7 +118,7 @@ export class AuthService {
     // refresh_token 발급
     async createRefreshToken(user: User): Promise<string> {
         const payload = {
-            userId: user.email
+            userId: user.id
         };
 
         const refreshToken = await this.jwtService.signAsync(
@@ -114,11 +133,14 @@ export class AuthService {
     }
 
     // DB의 refresh_token과 현재 refresh_token 비교
-    async compareUserRefreshToken(email: string, refreshToken: string): Promise<boolean> {
-        const user = await this.userService.getUser(email);
+    async compareUserRefreshToken(id: number, refreshToken: string): Promise<boolean> {
+        const user = await this.userService.getUserById(id);
 
         // 사용자에게 저장된 refresh token이 없으면 false 반환
         if (!user.currentRefreshToken) return false;
+
+        console.log(refreshToken);
+        console.log(user.currentRefreshToken);
 
         // refresh_token 비교
         const result = await bcrypt.compare(refreshToken, user.currentRefreshToken);
@@ -128,7 +150,7 @@ export class AuthService {
     }
 
     // DB user 데이터에 refresh_token 저장
-    async setUserCurrentRefreshToken(email: string, refreshToken: string): Promise<void> {
+    async setUserCurrentRefreshToken(id: number, refreshToken: string): Promise<void> {
         // refresh_token 암호화
         const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
         
@@ -139,7 +161,7 @@ export class AuthService {
 
         // DB 업데이트
         await this.userService.updateUser({
-            email,
+            id,
             currentRefreshToken: hashedRefreshToken,
             currentRefreshTokenExp: refreshTokenExp
         });
