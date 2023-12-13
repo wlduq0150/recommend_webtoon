@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { WebtoonService } from './webtoon.service';
 import { CreateFineTunePrompt, InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
+import { JwtAccessTokenGuard } from 'src/auth/guard/accessToken.guard';
 
 @Controller('webtoon')
 export class WebtoonController {
 
     constructor(private webtoonService: WebtoonService) {}
 
-    @Get("content/:id")
+    @Get(":id/content")
     getWebtoon(@Param("id") webtoonId: string) {
         return this.webtoonService.getWebtoonForId(webtoonId);
     }

@@ -12,6 +12,7 @@ import { CrawlingModule } from './crawling/crawling.module';
 import { OpenaiModule } from './openai/openai.module';
 import { GenreModule } from './genre/genre.module';
 import { RecommendModule } from './recommend/recommend.module';
+import { UserWebtoonModule } from './user-webtoon/user-webtoon.module';
 
 @Module({
     imports: [
@@ -24,7 +25,8 @@ import { RecommendModule } from './recommend/recommend.module';
       CrawlingModule,
       OpenaiModule,
       GenreModule,
-      RecommendModule
+      RecommendModule,
+      UserWebtoonModule
     ],
     controllers: [AppController],
     providers: [AppService, DtoFilterProvider],

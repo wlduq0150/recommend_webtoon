@@ -59,7 +59,6 @@ export class AuthController {
     @UseGuards(JwtRefreshTokenGuard)
     @Post("refresh")
     async refresh(@Req() req: any, @Res({ passthrough: true }) res: Response) {
-        console.log(req.user);
         const userId: number = req.user?.userId;
         const refreshToken = req.user?.refreshToken;
 
@@ -72,16 +71,11 @@ export class AuthController {
         return tokenData;
     }
 
-    @UseGuards(JwtAccessTokenGuard)
     @UseGuards(JwtRefreshTokenGuard)
     @Post("logout")
     async logout(@Req() req: any, @Res() res: Response) {
         await this.authService.logout(req.user.userId);
-
-        // 쿠키 토큰 삭제
-        res.clearCookie("access_token");
-        res.clearCookie("refresh_token");
-        return res.send("logout complete");
+        return res.send(true);
     }
 
 }

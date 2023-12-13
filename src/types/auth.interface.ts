@@ -1,11 +1,12 @@
 
 export interface TokenData {
-    accessToken: string;
-    refreshToken: string;
+    userId?: number;
+    accessToken?: string;
+    refreshToken?: string;
 }
 
 export interface AccessTokenPayload {
-    userId: string;
+    userId: number;
     name: string;
     age: string;
     sex: string;

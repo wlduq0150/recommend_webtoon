@@ -10,7 +10,7 @@ async function bootstrap() {
 
     // Cors 활성화
     app.enableCors({
-        origin: true, //여기에 url을 넣어도된다.
+        origin: true,
         credentials: true,
     });
 
