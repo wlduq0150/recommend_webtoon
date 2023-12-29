@@ -15,7 +15,19 @@ export class UserWebtoonService {
         private readonly webtoonService: WebtoonService
     ) {}
 
-    async checkUserRead(userId: number, webtoonId: string) {
+    async checkIsUserRead(userId: number, webtoonId: string) {
+        const user_webtoon = await this.userWebtoonModel.findOne({
+            where: { userId, webtoonId },
+        });
+
+        if (!user_webtoon) {
+            return false;
+        }
+
+        return true;
+    }
+
+    async addUserRead(userId: number, webtoonId: string) {
         const user = await this.userService.getUserById(userId);
         const webtoon = await this.webtoonService.getWebtoonForId(webtoonId);
 

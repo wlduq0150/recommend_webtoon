@@ -1,10 +1,10 @@
 export interface SelectOption {
-    genreUpCount?: number,
-    genreDownCount?: number,
-    updateDay?: string,
-    category?: string,
-    service?: string,
-    fanCount?: number,
+    genreUpCount?: number;
+    genreDownCount?: number;
+    updateDay?: string;
+    category?: string;
+    service?: string;
+    fanCount?: number;
     descriptionLength?: number;
 }
 
@@ -30,9 +30,8 @@ export interface CrawledWebtoon {
     service: string;
     updateDay?: string;
     category?: string;
-    genres?: string;
+    genres?: string[];
     genreCount?: number;
     description?: string;
     fanCount?: number;
 }
-    

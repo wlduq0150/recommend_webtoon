@@ -1,30 +1,34 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Cache } from 'cache-manager';
-import { ChatCompletionMessageParam } from 'openai/resources';
-import { webtoonCacheTTL } from 'src/constatns/cache.constants';
-import { OPENAI_JSONL_FOLDER_PATH, OPENAI_JSON_FOLDER_PATH } from 'src/constatns/openai.constants';
-import { CreateFineTunePrompt, InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
-import { Webtoon } from 'src/sequelize/entity/webtoon.model';
-import { SelectOption } from 'src/types/webtoon.interface';
-import { genreToText } from './function/genreToText.function';
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Cache } from "cache-manager";
+import { ChatCompletionMessageParam } from "openai/resources";
+import { webtoonCacheTTL } from "src/constatns/cache.constants";
+import { OPENAI_JSONL_FOLDER_PATH, OPENAI_JSON_FOLDER_PATH } from "src/constatns/openai.constants";
+import { Webtoon } from "src/sequelize/entity/webtoon.model";
+import { SelectOption } from "src/types/webtoon.interface";
+import { genreToText } from "./function/genreToText.function";
 import * as fs from "fs";
 import * as path from "path";
-
+import { GenreService } from "src/genre/genre.service";
+import { InsertWebtoonDto } from "./dto/insert-webtoon.dto";
+import { UpdateWebtoonDto } from "./dto/update-webtoon.dto";
+import { CreateFineTunePrompt } from "./dto/finetuning-prompt.dto";
+import { GenreWebtoon } from "src/sequelize/entity/genreWebtoon.model";
+import { Genre } from "src/sequelize/entity/genre.model";
 
 @Injectable()
 export class WebtoonService {
-
     constructor(
-        @Inject("WEBTOON") private webtoonModel: typeof Webtoon,
-        @Inject(CACHE_MANAGER) private cacheManager: Cache
+        @Inject("WEBTOON") private readonly webtoonModel: typeof Webtoon,
+        @Inject("GENREWEBTOON")
+        private readonly genreWebtoonModel: typeof GenreWebtoon,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+        private readonly genreService: GenreService,
     ) {}
 
-    
     async getAllWebtoon(): Promise<Webtoon[]> {
         return this.webtoonModel.findAll();
     }
-
 
     async getAllWebtoonForIds(ids: string[]): Promise<Webtoon[]> {
         const webtoons: Webtoon[] = [];
@@ -35,10 +39,9 @@ export class WebtoonService {
         return webtoons;
     }
 
-
     async getWebtoonForId(id: string): Promise<Webtoon> {
         // cache-key
-        const webtoonCacheKey: string = `webtoonCache-${id}`; 
+        const webtoonCacheKey: string = `webtoonCache-${id}`;
 
         // cache 값이 있다면 바로 값을 반환
         const webtoonCache: string = await this.cacheManager.get(webtoonCacheKey);
@@ -52,7 +55,7 @@ export class WebtoonService {
             where: { id },
             attributes: { exclude: ["embVector", "embVectorDescription"] },
         });
-        
+
         if (!webtoon) {
             throw new NotFoundException(`webtoonId ${id} is not exsit.`);
         }
@@ -69,10 +72,11 @@ export class WebtoonService {
 
     // 캐시 없이 웹툰 가져오기
     async getWebtoonForIdNoCache(id: string): Promise<Webtoon> {
-        const webtoon: Webtoon =  await this.webtoonModel.findOne({ where: { id }});
+        const webtoon: Webtoon = await this.webtoonModel.findOne({
+            where: { id },
+        });
         return webtoon;
     }
-
 
     // 요일별 웹툰 가져오기(캐시)
     async getAllWebtoonForDay(day: string): Promise<Webtoon[]> {
@@ -84,12 +88,10 @@ export class WebtoonService {
             return dayWebtoon;
         }
 
-        const webtoons: Webtoon[] =  await this.webtoonModel.findAll(
-            {
-                attributes: { exclude: ["embVector"] },
-                where: { updateDay: day }
-            }
-        );
+        const webtoons: Webtoon[] = await this.webtoonModel.findAll({
+            attributes: { exclude: ["embVector"] },
+            where: { updateDay: day },
+        });
         if (!webtoons) {
             throw new NotFoundException(`webtoon's day ${day} is wrong.`);
         }
@@ -98,7 +100,6 @@ export class WebtoonService {
 
         return webtoons;
     }
-
 
     // 완결 웹툰 모두 가져오기(캐시)
     async getAllFinishedWebtoon(): Promise<Webtoon[]> {
@@ -110,19 +111,16 @@ export class WebtoonService {
             return finishedWebtoon;
         }
 
-        const webtoons: Webtoon[] =  await this.webtoonModel.findAll(
-            {
-                attributes: { exclude: ["embVector"] },
-                where: { updateDay: "완" }
-            }
-        );
+        const webtoons: Webtoon[] = await this.webtoonModel.findAll({
+            attributes: { exclude: ["embVector"] },
+            where: { updateDay: "완" },
+        });
 
         this.cacheManager.set(finishedWebtoonCacheKey, JSON.stringify(webtoons));
 
         return webtoons;
-    };
-    
-	
+    }
+
     // 옵션에 맞는 웹툰 가져오기
     async getAllWebtoonForOption(option: SelectOption): Promise<Webtoon[]> {
         let selectQeury: string = "SELECT * FROM webtoons WHERE ";
@@ -154,7 +152,7 @@ export class WebtoonService {
         }
 
         if (option.updateDay) {
-            selectQeury += `AND updateDay=${option.updateDay} `;
+            selectQeury += `AND updateDay="${option.updateDay}" `;
         }
 
         if (option.descriptionLength) {
@@ -163,7 +161,7 @@ export class WebtoonService {
 
         let data, webtoonList: Webtoon[];
         try {
-            data = (await this.webtoonModel.sequelize.query(selectQeury)) as (Webtoon[])[];
+            data = (await this.webtoonModel.sequelize.query(selectQeury)) as Webtoon[][];
             webtoonList = data[0];
         } catch (e) {
             console.log(e);
@@ -173,37 +171,93 @@ export class WebtoonService {
         return webtoonList;
     }
 
-
     // insert
     // insert
 
     async insertWebtoon(insertWebtoonDto: InsertWebtoonDto): Promise<boolean> {
-        const { webtoonId } = insertWebtoonDto;
-        const webtoon = await this.webtoonModel.findOne({ where: { id: webtoonId } })
-
-        if (webtoon) {
-            throw new ConflictException(`webtoonId ${webtoonId} is already exist.`);
-        }
-        
-        await this.webtoonModel.create({
-            ...insertWebtoonDto,
+        const { id, genres } = insertWebtoonDto;
+        const isWebtoon = await this.webtoonModel.findOne({
+            where: { id },
         });
+
+        if (isWebtoon) {
+            throw new ConflictException(`webtoonId ${id} is already exist.`);
+        }
+
+        const genreText = JSON.stringify(genres);
+
+        const webtoon = await this.webtoonModel.create({
+            ...insertWebtoonDto,
+            genres: genreText,
+        });
+
+        for (let keyword of genres) {
+            let genre = await this.genreService.getGenre({
+                keyword,
+            });
+
+            // 장르 키워드가 없으면 건너뛰기
+            if (!genre) {
+                console.log(keyword);
+                continue;
+            }
+
+            // 장르 키워드가 네이버면 카카오로 통일
+            if (genre.service === "naver" && genre.transformed) {
+                genre = await this.genreService.getGenre({
+                    keyword: genre.transformed,
+                    service: "kakao",
+                });
+
+                if (!genre) {
+                    console.log(keyword);
+                    continue;
+                }
+            }
+
+            // 웹툰에 장르 추가
+            await webtoon.$add("genres_", genre);
+        }
 
         return true;
     }
-
 
     // Patch
     // Patch
 
     async updateWebtoonForOption(updateWebtoonDto: UpdateWebtoonDto): Promise<boolean> {
-        const { id }: { id: string } = updateWebtoonDto;
-        await this.getWebtoonForId(id);
+        const { id } = updateWebtoonDto;
+        const webtoon = await this.getWebtoonForId(id);
 
-        await this.webtoonModel.update(
-            { ...updateWebtoonDto },
-            { where: { id } },
-        );
+        await this.webtoonModel.update({ ...updateWebtoonDto }, { where: { id } });
+
+        if ("genres" in updateWebtoonDto) {
+            const beforeGenres = await webtoon.$get("genres_", {
+                attributes: ["keyword"],
+            });
+            const beforeGenreKeywords = beforeGenres.map((bg) => {
+                return bg.keyword;
+            });
+
+            const newGenrekeywords = updateWebtoonDto.genres;
+
+            for (let bGenre of beforeGenres) {
+                if (!newGenrekeywords.includes(bGenre.keyword)) {
+                    webtoon.$remove("genres_", bGenre);
+                }
+            }
+
+            for (let nGenreKeyword of newGenrekeywords) {
+                if (!beforeGenreKeywords.includes(nGenreKeyword)) {
+                    const nGenre = await this.genreService.getGenre({
+                        keyword: nGenreKeyword,
+                        service: "kakao",
+                    });
+
+                    webtoon.$add("genres_", nGenre);
+                }
+            }
+        }
 
         // 웹툰 수정, 삭제시 캐시된 값도 삭제
         const webtoonCacheKey: string = `webtoonCache-${id}`;
@@ -212,16 +266,13 @@ export class WebtoonService {
         return true;
     }
 
-
     /// delete
     /// delete
 
     async deleteWebtoon(id: string): Promise<boolean> {
         await this.getWebtoonForId(id);
 
-        await this.webtoonModel.destroy(
-            { where: { id }
-        });
+        await this.webtoonModel.destroy({ where: { id } });
 
         // 웹툰 수정, 삭제시 캐시된 값도 삭제
         const webtoonCacheKey: string = `webtoonCache-${id}`;
@@ -232,8 +283,10 @@ export class WebtoonService {
 
     // 웹툰 테이블의 제목, 줄거리, 장르를 미세조정 형식인 json 파일로 변환
     async createFineTuningData(createFineTunePrompt: CreateFineTunePrompt): Promise<number> {
-        const webtoons = await this.getAllWebtoonForOption({ ...createFineTunePrompt });
-        let jsonData: any[] = []; 
+        const webtoons = await this.getAllWebtoonForOption({
+            ...createFineTunePrompt,
+        });
+        let jsonData: any[] = [];
 
         for (let webtoon of webtoons) {
             const description = webtoon.description.replaceAll(/[\*\+#=\n]/g, "");
@@ -257,7 +310,9 @@ export class WebtoonService {
             OPENAI_JSON_FOLDER_PATH,
             `webtoon_training_${createFineTunePrompt.category}.json`,
         );
-        fs.writeFileSync(writePath, JSON.stringify(jsonData), { encoding: "utf-8" });
+        fs.writeFileSync(writePath, JSON.stringify(jsonData), {
+            encoding: "utf-8",
+        });
 
         return webtoons.length;
     }

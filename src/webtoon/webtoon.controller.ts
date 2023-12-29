@@ -1,11 +1,23 @@
-import { Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { WebtoonService } from './webtoon.service';
-import { CreateFineTunePrompt, InsertWebtoonDto, UpdateWebtoonDto } from 'src/dto/webtoon.dto';
-import { JwtAccessTokenGuard } from 'src/auth/guard/accessToken.guard';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    InternalServerErrorException,
+    Param,
+    Patch,
+    Post,
+    Req,
+    UseGuards,
+} from "@nestjs/common";
+import { WebtoonService } from "./webtoon.service";
+import { JwtAccessTokenGuard } from "src/auth/guard/accessToken.guard";
+import { InsertWebtoonDto } from "./dto/insert-webtoon.dto";
+import { UpdateWebtoonDto } from "./dto/update-webtoon.dto";
+import { CreateFineTunePrompt } from "./dto/finetuning-prompt.dto";
 
-@Controller('webtoon')
+@Controller("webtoon")
 export class WebtoonController {
-
     constructor(private webtoonService: WebtoonService) {}
 
     @Get(":id/content")
@@ -42,5 +54,4 @@ export class WebtoonController {
     deleteWebtoon(@Param("id") webtoonId: string) {
         return this.webtoonService.deleteWebtoon(webtoonId);
     }
-
 }

@@ -1,5 +1,6 @@
 import {
     Controller,
+    Get,
     InternalServerErrorException,
     Param,
     Post,
@@ -15,16 +16,17 @@ export class UserWebtoonController {
     constructor(private readonly userWebtoonService: UserWebtoonService) {}
 
     @UseGuards(JwtAccessTokenGuard)
-    @Post(":webtoonId/checkRead")
-    checkUserRead(@Req() req, @Param("webtoonId") webtoonId: string) {
-        try {
-            const userId = req.user.userId;
-            return this.userWebtoonService.checkUserRead(userId, webtoonId);
-        } catch (e) {
-            if (!e.status) {
-                console.log(e);
-                throw new InternalServerErrorException("예기치 않은 에러입니다.");
-            }
-        }
+    @Get(":webtoonId/checkRead")
+    checkIsUserRead(@Req() req, @Param("webtoonId") webtoonId: string) {
+        const userId = req.user.userId;
+        return this.userWebtoonService.checkIsUserRead(userId, webtoonId);
     }
+
+    @UseGuards(JwtAccessTokenGuard)
+    @Post(":webtoonId/addRead")
+    addUserRead(@Req() req, @Param("webtoonId") webtoonId: string) {
+        const userId = req.user.userId;
+        return this.userWebtoonService.addUserRead(userId, webtoonId);
+    }
+
 }

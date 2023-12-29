@@ -1,17 +1,17 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { OpenaiService } from 'src/openai/openai.service';
-import { WebtoonService } from 'src/webtoon/webtoon.service';
+import { Inject, Injectable, NotFoundException, forwardRef } from "@nestjs/common";
+import { OpenaiService } from "src/openai/openai.service";
+import { WebtoonService } from "src/webtoon/webtoon.service";
 
 import * as fs from "fs";
 import * as path from "path";
-import { CATEGORY_FOLDER, GENRE_FOLDER, TRANSOFRM_FOLDER } from 'src/constatns/genre.constants';
-import { Genre } from 'src/sequelize/entity/genre.model';
-import { ChatCompletionMessageParam } from 'openai/resources';
-import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from 'src/dto/genre.dto';
-import { OPENAI_JSONL_FOLDER_PATH } from 'src/constatns/openai.constants';
-import { UpdateWebtoonDto } from 'src/dto/webtoon.dto';
-import { ConfigService } from '@nestjs/config';
-import { GenreWebtoon } from 'src/sequelize/entity/genreWebtoon.model';
+import { CATEGORY_FOLDER, GENRE_FOLDER, TRANSOFRM_FOLDER } from "src/constatns/genre.constants";
+import { Genre } from "src/sequelize/entity/genre.model";
+import { ChatCompletionMessageParam } from "openai/resources";
+import { CreateGenreDto, DeleteGenreDto, GetGenreDto, UpdateGenreDto } from "src/dto/genre.dto";
+import { OPENAI_JSONL_FOLDER_PATH } from "src/constatns/openai.constants";
+import { ConfigService } from "@nestjs/config";
+import { GenreWebtoon } from "src/sequelize/entity/genreWebtoon.model";
+import { UpdateWebtoonDto } from "src/webtoon/dto/update-webtoon.dto";
 
 @Injectable()
 export class GenreService {
@@ -19,6 +19,7 @@ export class GenreService {
         @Inject("GENRE") private genreModel: typeof Genre,
         @Inject("GENREWEBTOON") private genreWebtoonModel: typeof GenreWebtoon,
         private readonly configService: ConfigService,
+        @Inject(forwardRef(() => WebtoonService))
         private readonly webtoonService: WebtoonService,
         private readonly openaiService: OpenaiService,
     ) {}
@@ -31,7 +32,10 @@ export class GenreService {
                 const keywords = JSON.parse(webtoon.genres);
 
                 for (let keyword of keywords) {
-                    const genre = await this.getGenre({ keyword, service: "kakao" });
+                    const genre = await this.getGenre({
+                        keyword,
+                        service: "kakao",
+                    });
                     if (!genre) {
                         console.log(keyword, "장르가 존재하지 않습니다.");
                         continue;
@@ -41,7 +45,7 @@ export class GenreService {
                     const webtoonId = webtoon.id;
 
                     const isExist = await this.genreWebtoonModel.findOne({
-                        where: { genreId, webtoonId }
+                        where: { genreId, webtoonId },
                     });
 
                     if (isExist) {
@@ -54,10 +58,12 @@ export class GenreService {
                         webtoonId: webtoon.id,
                     });
 
-                    console.log(`\n\n[생성]\n웹툰id: ${webtoon.id}\n제목: ${webtoon.title}\n장르키워드: ${genre.keyword}`);
+                    console.log(
+                        `\n\n[생성]\n웹툰id: ${webtoon.id}\n제목: ${webtoon.title}\n장르키워드: ${genre.keyword}`,
+                    );
                 }
             }
-        } catch(e) {
+        } catch (e) {
             console.log(e);
         }
     }
@@ -66,7 +72,7 @@ export class GenreService {
     async getAllGenre(service?: string): Promise<Genre[]> {
         const genres = await this.genreModel.findAll({
             where: { service: service ? service : ["kakao", "naver"] },
-            attributes: { exclude: ["embVector"] }
+            attributes: { exclude: ["embVector"] },
         });
         return genres;
     }
@@ -150,13 +156,18 @@ export class GenreService {
         }
 
         const writePath = path.join(OPENAI_JSONL_FOLDER_PATH, "keywordDescription.json");
-        fs.writeFileSync(writePath, JSON.stringify(jsonData), { encoding: "utf-8" });
+        fs.writeFileSync(writePath, JSON.stringify(jsonData), {
+            encoding: "utf-8",
+        });
     }
 
     // 장르 뜻 gpt에게 요청
     async getKeywordDescription(keyword: string): Promise<string> {
         const prompt: ChatCompletionMessageParam[] = [
-            { role: "system", content: "너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야." },
+            {
+                role: "system",
+                content: "너는 웹툰의 장르 키워드와 그 뜻을 알고있는 전문가야.",
+            },
             { role: "user", content: `장르 키워드 ${keyword}의 뜻이 뭐야?` },
         ];
 
@@ -186,7 +197,9 @@ export class GenreService {
             const content = `${keyword}\n##\n${description}\n#######\n`;
             initContent += content;
             console.log(content);
-            await fs.writeFileSync(writePath, initContent, { encoding: "utf-8" });
+            await fs.writeFileSync(writePath, initContent, {
+                encoding: "utf-8",
+            });
 
             await this.createGenre({ keyword, service, description });
         }
@@ -194,11 +207,13 @@ export class GenreService {
         await fs.writeFileSync(writePath, initContent, { encoding: "utf-8" });
     }
 
-    // initKeyword 메서드로 생성된 텍스트 파일 수정후 DB 업데이트 
+    // initKeyword 메서드로 생성된 텍스트 파일 수정후 DB 업데이트
     async updateGenreDescription(service: string): Promise<void> {
         // 수정된 파일에서 장르 및 의미 읽어오기
         const filePath = path.join(GENRE_FOLDER, `${service}Genre.txt`);
-        const readContent = await fs.readFileSync(filePath, { encoding: "utf-8" });
+        const readContent = await fs.readFileSync(filePath, {
+            encoding: "utf-8",
+        });
         let contents = readContent
             .toString()
             .replaceAll("\r\n", "")
@@ -265,7 +280,6 @@ export class GenreService {
         const referGenres = await this.getAllGenre(referService);
         let result: { [keyword: string]: string } = {};
 
-
         for (let genre of genres) {
             // 벡터간의 코사인 유사도는 -1 ~ 1 사이, 따라서 최솟값은 -1로 초기화
             let maxSimilarity = -1;
@@ -305,12 +319,11 @@ export class GenreService {
         let transform: { [keyword: string]: string };
         try {
             const filePath = path.join(TRANSOFRM_FOLDER, `${service}GenreTransform.json`);
-            transform  = require(filePath);
+            transform = require(filePath);
         } catch (e) {
             console.log(e);
             throw new NotFoundException(`${service} 변환 파일이 존재하지 않습니다.`);
         }
-        
 
         // 읽어온 데이터로 db 업데이트 하기
         for (let keyword of Object.keys(transform)) {
@@ -342,12 +355,14 @@ export class GenreService {
         const categoryTransform: { [category: string]: string } = require(filePath);
 
         // 해당 플랫폼 웹툰 전부 불러오기
-        const webtoons = await this.webtoonService.getAllWebtoonForOption({ service });
+        const webtoons = await this.webtoonService.getAllWebtoonForOption({
+            service,
+        });
 
         for (let webtoon of webtoons) {
             const { id, category } = webtoon;
             const genres = JSON.parse(webtoon.genres);
-            
+
             let updateDto: UpdateWebtoonDto = { id };
 
             // 카테고리 변환
@@ -359,7 +374,7 @@ export class GenreService {
                 // 카테고리가 드라마일 경우 기존의 카테고리를 장르에 더한다.
                 if (newCategory === "드라마" && !genres.includes(category)) {
                     const newGenres = [category, ...genres];
-                    updateDto.genres = JSON.stringify(newGenres);
+                    updateDto.genres = newGenres;
                     updateDto.genreCount = newGenres.length;
                     console.log(`${category} => ${newGenres}`);
                 }
@@ -372,11 +387,13 @@ export class GenreService {
                 console.log(`카테고리 ${category} 유지`);
             }
         }
-    }    
+    }
 
     // Transform 파일을 통해 해당 서비스의 웹툰 장르 변환 및 삭제
     async updateWebtoonGenreForTransform(service: string, referService: boolean) {
-        const webtoons = await this.webtoonService.getAllWebtoonForOption({ service });
+        const webtoons = await this.webtoonService.getAllWebtoonForOption({
+            service,
+        });
 
         for (let webtoon of webtoons) {
             let keywords: string[] = JSON.parse(webtoon.genres);
@@ -394,7 +411,7 @@ export class GenreService {
                 }
 
                 // 장르 키워드가 DB에 없다면 삭제
-                if ( !genre || ( !referService && genre && genre.service !== service )) {
+                if (!genre || (!referService && genre && genre.service !== service)) {
                     console.log(`장르 키워드 ${keyword} 삭제 완료`);
                     keywords[idx] = "delete";
                     continue;
@@ -410,14 +427,15 @@ export class GenreService {
             }
 
             // 장르 삭제 및 개수 다시 카운트
-            keywords = keywords.filter((keyword) => { return keyword !== "delete" });
+            keywords = keywords.filter((keyword) => {
+                return keyword !== "delete";
+            });
             const genreCount = keywords.length;
             console.log(keywords);
 
             // 변경사항에 저장
-            updateDto.genres = JSON.stringify(keywords);
+            updateDto.genres = keywords;
             updateDto.genreCount = genreCount;
-            
 
             // DB 장르 및 장르 개수 업데이트
             await this.webtoonService.updateWebtoonForOption(updateDto);
