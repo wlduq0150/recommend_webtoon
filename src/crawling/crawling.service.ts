@@ -21,7 +21,7 @@ export class CrawlingService {
     constructor(
         private readonly configService: ConfigService,
         private readonly webtoonService: WebtoonService,
-        @Inject(CACHE_MANAGER) readonly cacheManager: Cache,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) {}
 
     async test() {
@@ -39,7 +39,7 @@ export class CrawlingService {
         return result;
     }
 
-    async login(page: Page, service: string): Promise<boolean> {
+    private async login(page: Page, service: string): Promise<boolean> {
         const id = this.configService.get<string>(`CRAWLING_${service.toUpperCase()}_ID`);
         const pw = this.configService.get<string>(`CRAWLING_${service.toUpperCase()}_PW`);
 
