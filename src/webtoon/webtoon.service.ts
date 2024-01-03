@@ -91,6 +91,7 @@ export class WebtoonService {
         const webtoons: Webtoon[] = await this.webtoonModel.findAll({
             attributes: { exclude: ["embVector"] },
             where: { updateDay: day },
+            order: [["fanCount", "DESC"]],
         });
         if (!webtoons) {
             throw new NotFoundException(`webtoon's day ${day} is wrong.`);

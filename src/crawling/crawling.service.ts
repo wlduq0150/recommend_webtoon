@@ -171,7 +171,7 @@ export class CrawlingService {
 
     async updateWebtoonForDay(day: string) {
         const browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             // args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
