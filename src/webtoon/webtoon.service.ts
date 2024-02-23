@@ -15,6 +15,7 @@ import { UpdateWebtoonDto } from "./dto/update-webtoon.dto";
 import { CreateFineTunePrompt } from "./dto/finetuning-prompt.dto";
 import { GenreWebtoon } from "src/sequelize/entity/genreWebtoon.model";
 import { Genre } from "src/sequelize/entity/genre.model";
+import { User } from "src/sequelize/entity/user.model";
 
 @Injectable()
 export class WebtoonService {
@@ -170,6 +171,25 @@ export class WebtoonService {
         }
 
         return webtoonList;
+    }
+
+    async getIsUserWebtoonRead(webtoonId: string, userId: number): Promise<boolean> {
+        const webtoon = await this.webtoonModel.findOne({
+            where: { id: webtoonId },
+            include: {
+                model: User,
+                attributes: ["id"],
+                where: {
+                    id: userId,
+                },
+            },
+        });
+
+        if (!webtoon) {
+            return false;
+        }
+
+        return true;
     }
 
     // insert

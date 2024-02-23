@@ -14,11 +14,12 @@ export class JwtAccessTokenStrategy extends PassportStrategy(Strategy, "access_t
     ) {
         super({
             // request의 쿠키에서 access token을 가져옴
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                (req) => {
-                    return req.headers.authorization.replace("Bearer ", "");
-                }
-            ]),
+            // jwtFromRequest: ExtractJwt.fromExtractors([
+            //     (req) => {
+            //         return req.headers.authorization.replace("Bearer ", "");
+            //     }
+            // ]),
+            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             // access toke  n secret key
             secretOrKey: configService.get<string>("JWT_ACCESS_TOKEN_SECRET"),
             // 만료된 토큰도 통과(예외 처리를 위해)

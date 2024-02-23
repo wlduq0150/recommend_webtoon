@@ -46,30 +46,18 @@ export class UserService {
     }
 
     async getUserReadWebtoonIds(userId: number): Promise<string[]> {
-        const userReadCacheKey: string = `userReadCache-${userId}`;
-
-        const userReadCache: string = await this.cacheManager.get(userReadCacheKey);
-        if (userReadCache) {
-            return JSON.parse(userReadCache);
-        }
-
-        const exUser: User = await this.getUserById(userId);
-
-        // 사용자가 이미 읽은 웹툰 목록
-        const readWebtoons: Webtoon[] = await exUser.$get("readWebtoons", {
-            attributes: ["id"],
+        const exUser: User = await this.userModel.findOne({
+            where: { id: userId },
+            include: {
+                model: Webtoon,
+                attributes: ["id"],
+            },
         });
 
         // 웹툰 목록을 id 배열로 바꾸기
-        const readwebtoonIds: string[] = readWebtoons.map((webtoon) => {
+        const readwebtoonIds: string[] = exUser.readWebtoons.map((webtoon) => {
             return webtoon.id;
         });
-
-        await this.cacheManager.set(
-            userReadCacheKey,
-            JSON.stringify(readwebtoonIds),
-            UserReadCacheTTL,
-        );
 
         return readwebtoonIds;
     }

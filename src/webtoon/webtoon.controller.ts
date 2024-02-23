@@ -15,6 +15,7 @@ import { JwtAccessTokenGuard } from "src/auth/guard/accessToken.guard";
 import { InsertWebtoonDto } from "./dto/insert-webtoon.dto";
 import { UpdateWebtoonDto } from "./dto/update-webtoon.dto";
 import { CreateFineTunePrompt } from "./dto/finetuning-prompt.dto";
+import { UserId } from "src/auth/decorators/userId.decorator";
 
 @Controller("webtoon")
 export class WebtoonController {
@@ -23,6 +24,12 @@ export class WebtoonController {
     @Get(":id/content")
     getWebtoon(@Param("id") webtoonId: string) {
         return this.webtoonService.getWebtoonForId(webtoonId);
+    }
+
+    @UseGuards(JwtAccessTokenGuard)
+    @Get(":id/content")
+    getIsUserWebtoonRead(@Param("id") webtoonId: string, @UserId() userId: number) {
+        return this.webtoonService.getIsUserWebtoonRead(webtoonId, userId);
     }
 
     @Get("day/:day")
