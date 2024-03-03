@@ -48,13 +48,17 @@ export class WebtoonService {
         const webtoonCache: string = await this.cacheManager.get(webtoonCacheKey);
         if (webtoonCache) {
             const webtoonInfo = JSON.parse(webtoonCache);
-            return new Webtoon(webtoonInfo);
+            return webtoonInfo;
         }
 
         // database에서 해당 id의 웹툰 가져오기
         const webtoon: Webtoon = await this.webtoonModel.findOne({
             where: { id },
             attributes: { exclude: ["embVector", "embVectorDescription"] },
+            include: {
+                model: Genre,
+                attributes: ["keyword"],
+            },
         });
 
         if (!webtoon) {

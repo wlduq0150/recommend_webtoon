@@ -26,11 +26,11 @@ export class WebtoonController {
         return this.webtoonService.getWebtoonForId(webtoonId);
     }
 
-    @UseGuards(JwtAccessTokenGuard)
-    @Get(":id/content")
-    getIsUserWebtoonRead(@Param("id") webtoonId: string, @UserId() userId: number) {
-        return this.webtoonService.getIsUserWebtoonRead(webtoonId, userId);
-    }
+    // @UseGuards(JwtAccessTokenGuard)
+    // @Get(":id/content")
+    // getIsUserWebtoonRead(@Param("id") webtoonId: string, @UserId() userId: number) {
+    //     return this.webtoonService.getIsUserWebtoonRead(webtoonId, userId);
+    // }
 
     @Get("day/:day")
     getAllWebtoonForDay(@Param("day") day: string) {
