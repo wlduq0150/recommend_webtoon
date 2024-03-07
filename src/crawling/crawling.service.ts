@@ -33,6 +33,9 @@ export class CrawlingService {
 
         const result = await this.login(page, "naver");
 
+        const webtoon = await this.crawlWebtoonForId(page, "821336", "naver");
+        console.log(webtoon);
+
         await page.close();
         await browser.close();
 
@@ -171,7 +174,7 @@ export class CrawlingService {
 
     async updateWebtoonForDay(day: string) {
         const browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             // args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();

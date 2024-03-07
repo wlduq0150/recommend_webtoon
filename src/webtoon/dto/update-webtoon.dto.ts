@@ -66,9 +66,4 @@ export class UpdateWebtoonDto {
     @IsString()
     @ApiPropertyOptional({ description: "장르 임베딩 벡터" })
     embVector?: string;
-
-    @IsOptional()
-    @IsString()
-    @ApiPropertyOptional({ description: "줄거리 임베딩 벡터" })
-    embVectorDescription?: string;
 }

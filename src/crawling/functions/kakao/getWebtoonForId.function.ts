@@ -1,9 +1,6 @@
 import { Page } from "puppeteer";
 import * as cheerio from "cheerio";
-import {
-    CrawlWebtoonOption,
-    CrawledWebtoon,
-} from "src/types/webtoon.interface";
+import { CrawlWebtoonOption, CrawledWebtoon } from "src/types/webtoon.interface";
 import {
     KAKAO_AUTHOR_SELECTOR,
     KAKAO_CATEGORY_SELECTOR,
@@ -42,9 +39,7 @@ export async function getKakaoWebtoonForId(
     const webtoon: CrawledWebtoon = { webtoonId, service: "kakao" };
 
     try {
-        await page.goto(
-            `https://page.kakao.com/content/${webtoonId}?tab_type=about`,
-        );
+        await page.goto(`https://page.kakao.com/content/${webtoonId}?tab_type=about`);
         await page.waitForSelector(KAKAO_DESCRIPTION_SELECTOR);
 
         let content = await page.content();
@@ -133,9 +128,7 @@ export async function getKakaoWebtoonForId(
 
         // 팬수 구하기 (전체 조회수 / 에피소드 개수)
         if (!option || option.fanCount) {
-            webtoon.fanCount = Math.floor(
-                webtoon.fanCount / webtoon.episodeLength,
-            );
+            webtoon.fanCount = Math.floor(webtoon.fanCount / webtoon.episodeLength);
         }
     } catch (e) {
         console.log(`webtoonId ${webtoonId} is not crawled..`);

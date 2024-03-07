@@ -7,7 +7,7 @@ import { getKoreanDayOfWeek } from "./function/getDay.function";
 export class TimeScheduleService {
     constructor(private readonly crawlingService: CrawlingService) {}
 
-    @Cron("5 0 * * *")
+    @Cron("52 16 * * *")
     updateWebtoonForDay() {
         const today = getKoreanDayOfWeek();
 
